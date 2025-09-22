@@ -1,15 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
+import SidebarController from "./components/sidebar/controller";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
@@ -24,10 +20,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+      <body className={inter.className}>
+        <div className="flex min-h-screen">
+          {/* Sidebar: fixed height, no scroll */}
+          <div className="h-screen sticky top-0">
+           <SidebarController />
+          </div>
+
+          {/* Main content scrolls independently */}
+          <div className="flex-1 overflow-y-auto p-6 h-screen">
+            {children}
+          </div>
+        </div>
       </body>
     </html>
   );
