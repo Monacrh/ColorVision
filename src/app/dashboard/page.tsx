@@ -14,9 +14,10 @@ import {
   AlertTriangle,
   Award
 } from 'lucide-react';
+import Image from 'next/image';
 
-// Define types for our data
-interface Answer {
+// Type definitions
+interface TestAnswer {
   questionId: number;
   userAnswer: string;
   correctAnswer: string;
@@ -28,18 +29,16 @@ interface IshiharaTest {
   id: number;
   image: string;
   correctAnswer: string;
-  options: string[];
   description: string;
   difficulty: string;
 }
 
-// Sample Ishihara test data (in real app, you&apos;d have actual test images)
+// Sample Ishihara test data (simplified for keypad input)
 const ishiharaTests: IshiharaTest[] = [
   {
     id: 1,
     image: "data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='100' cy='100' r='95' fill='%23f0f0f0' stroke='%23ddd' stroke-width='2'/%3E%3Ctext x='100' y='110' text-anchor='middle' font-size='60' font-weight='bold' fill='%2388c999'%3E8%3C/text%3E%3C/svg%3E",
     correctAnswer: "8",
-    options: ["3", "8", "5", "0"],
     description: "Normal vision should see number 8",
     difficulty: "easy"
   },
@@ -47,7 +46,6 @@ const ishiharaTests: IshiharaTest[] = [
     id: 2,
     image: "data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='100' cy='100' r='95' fill='%23f0f0f0' stroke='%23ddd' stroke-width='2'/%3E%3Ctext x='100' y='110' text-anchor='middle' font-size='60' font-weight='bold' fill='%23ff6b6b'%3E29%3C/text%3E%3C/svg%3E",
     correctAnswer: "29",
-    options: ["70", "29", "79", "Cannot see"],
     description: "Test for red-green color blindness",
     difficulty: "medium"
   },
@@ -55,7 +53,6 @@ const ishiharaTests: IshiharaTest[] = [
     id: 3,
     image: "data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='100' cy='100' r='95' fill='%23f0f0f0' stroke='%23ddd' stroke-width='2'/%3E%3Ctext x='100' y='110' text-anchor='middle' font-size='60' font-weight='bold' fill='%234dabf7'%3E5%3C/text%3E%3C/svg%3E",
     correctAnswer: "5",
-    options: ["2", "5", "3", "Cannot see"],
     description: "Blue-yellow color vision test",
     difficulty: "hard"
   },
@@ -63,23 +60,22 @@ const ishiharaTests: IshiharaTest[] = [
     id: 4,
     image: "data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='100' cy='100' r='95' fill='%23f0f0f0' stroke='%23ddd' stroke-width='2'/%3E%3Ctext x='100' y='110' text-anchor='middle' font-size='60' font-weight='bold' fill='%2394a3b8'%3E42%3C/text%3E%3C/svg%3E",
     correctAnswer: "42",
-    options: ["42", "24", "72", "Cannot see"],
     description: "Advanced color discrimination test",
     difficulty: "hard"
   }
 ];
 
-const ColorBlindnessDashboard = () => {
+const ColorBlindnessDashboard: React.FC = () => {
   const [currentView, setCurrentView] = useState<'welcome' | 'test' | 'results'>('welcome');
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<Answer[]>([]);
-  const [timeRemaining, setTimeRemaining] = useState(30);
-  const [testStarted, setTestStarted] = useState(false);
-  const [testCompleted, setTestCompleted] = useState(false);
+  const [currentQuestion, setCurrentQuestion] = useState<number>(0);
+  const [answers, setAnswers] = useState<TestAnswer[]>([]);
+  const [currentInput, setCurrentInput] = useState<string>('');
+  const [timeRemaining, setTimeRemaining] = useState<number>(30);
+  const [testStarted, setTestStarted] = useState<boolean>(false);
+  const [testCompleted, setTestCompleted] = useState<boolean>(false);
 
-  // Use useCallback to memoize handleAnswer to avoid useEffect dependency issues
   const handleAnswer = useCallback((answer: string) => {
-    const newAnswers: Answer[] = [...answers, {
+    const newAnswers: TestAnswer[] = [...answers, {
       questionId: ishiharaTests[currentQuestion].id,
       userAnswer: answer,
       correctAnswer: ishiharaTests[currentQuestion].correctAnswer,
@@ -88,6 +84,7 @@ const ColorBlindnessDashboard = () => {
     }];
     
     setAnswers(newAnswers);
+    setCurrentInput('');
 
     if (currentQuestion < ishiharaTests.length - 1) {
       setCurrentQuestion(prev => prev + 1);
@@ -101,28 +98,52 @@ const ColorBlindnessDashboard = () => {
 
   // Timer effect
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval> | undefined;
+    
     if (testStarted && !testCompleted && timeRemaining > 0) {
       interval = setInterval(() => {
         setTimeRemaining(prev => {
           if (prev <= 1) {
-            handleAnswer('timeout');
+            handleAnswer(currentInput.trim() || 'timeout');
             return 30;
           }
           return prev - 1;
         });
       }, 1000);
     }
-    return () => clearInterval(interval);
-  }, [testStarted, testCompleted, timeRemaining, handleAnswer]);
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [testStarted, testCompleted, timeRemaining, currentInput, handleAnswer]);
 
   const startTest = () => {
     setCurrentView('test');
     setTestStarted(true);
     setCurrentQuestion(0);
     setAnswers([]);
+    setCurrentInput('');
     setTestCompleted(false);
     setTimeRemaining(30);
+  };
+
+  const handleKeypadInput = (value: string) => {
+    if (value === 'clear') {
+      setCurrentInput('');
+    } else if (value === 'cant-see') {
+      setCurrentInput("Can't see");
+    } else if (value === 'submit') {
+      if (currentInput.trim() !== '') {
+        handleAnswer(currentInput.trim());
+      }
+    } else {
+      // Handle number input (limit to 2 digits)
+      if (currentInput.length < 2 && !currentInput.includes("Can't see")) {
+        setCurrentInput(prev => prev + value);
+      }
+    }
   };
 
   const calculateResults = () => {
@@ -131,7 +152,7 @@ const ColorBlindnessDashboard = () => {
     
     let diagnosis = "Normal Color Vision";
     let recommendation = "Your color vision appears to be normal. No further testing needed.";
-    let severity: "none" | "medium" | "high" = "none";
+    let severity = "none";
 
     if (accuracy < 50) {
       diagnosis = "Possible Color Vision Deficiency";
@@ -151,6 +172,7 @@ const ColorBlindnessDashboard = () => {
     setCurrentQuestion(0);
     setAnswers([]);
     setTimeRemaining(30);
+    setCurrentInput('');
     setTestStarted(false);
     setTestCompleted(false);
   };
@@ -227,7 +249,7 @@ const ColorBlindnessDashboard = () => {
               <ul className="space-y-2 text-gray-600">
                 <li className="flex items-start">
                   <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                  Look at each color plate and identify the number you see
+                  Enter the number you see using the keypad
                 </li>
                 <li className="flex items-start">
                   <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
@@ -239,7 +261,7 @@ const ColorBlindnessDashboard = () => {
                 </li>
                 <li className="flex items-start">
                   <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                  Select &quot;Cannot see&quot; if no number is visible
+                  Press &quot;Can&apos;t See&quot; if no number is visible
                 </li>
               </ul>
             </div>
@@ -267,7 +289,7 @@ const ColorBlindnessDashboard = () => {
 
     return (
       <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -304,38 +326,100 @@ const ColorBlindnessDashboard = () => {
               />
             </div>
 
-            {/* Test Image */}
-            <div className="flex justify-center mb-8">
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="w-80 h-80 bg-white border-2 border-gray-200 rounded-2xl flex items-center justify-center shadow-sm"
-              >
-                {/* Using img element for data URLs is acceptable */}
-                <img 
-                  src={currentTest.image} 
-                  alt="Ishihara color test plate"
-                  className="w-72 h-72 rounded-xl"
-                />
-              </motion.div>
-            </div>
-
-            {/* Answer Options */}
-            <div className="grid grid-cols-2 gap-4">
-              {currentTest.options.map((option, index) => (
-                <motion.button
-                  key={option}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  onClick={() => handleAnswer(option)}
-                  className="p-4 border-2 border-gray-200 rounded-xl text-lg font-semibold text-gray-900 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+            {/* Main Content - Side by Side Layout */}
+            <div className="grid lg:grid-cols-2 gap-8 items-center">
+              {/* Left Side - Test Image */}
+              <div className="flex justify-center">
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="w-80 h-80 bg-white border-2 border-gray-200 rounded-2xl flex items-center justify-center shadow-sm"
                 >
-                  {option}
-                </motion.button>
-              ))}
+                  <Image 
+                    src={currentTest.image} 
+                    alt="Ishihara color test plate"
+                    width={288}
+                    height={288}
+                    className="w-72 h-72 rounded-xl"
+                  />
+                </motion.div>
+              </div>
+
+              {/* Right Side - Input and Keypad */}
+              <div className="flex flex-col justify-center">
+                {/* Input Display */}
+                <div className="mb-8">
+                  <div className="bg-gray-50 border-2 border-gray-200 rounded-xl px-8 py-6 text-center">
+                    <div className="text-sm text-gray-500 mb-2">Your Answer:</div>
+                    <div className="text-3xl font-bold text-gray-900 h-10">
+                      {currentInput || <span className="text-gray-400">Enter number</span>}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Keypad */}
+                <div className="max-w-sm">
+                  {/* Number Grid */}
+                  <div className="grid grid-cols-3 gap-3 mb-4">
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+                      <motion.button
+                        key={num}
+                        onClick={() => handleKeypadInput(num.toString())}
+                        className="h-14 bg-white border-2 border-gray-200 rounded-xl text-xl font-semibold text-gray-900 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        {num}
+                      </motion.button>
+                    ))}
+                  </div>
+
+                  {/* Zero and Special Buttons */}
+                  <div className="grid grid-cols-3 gap-3 mb-4">
+                    <motion.button
+                      onClick={() => handleKeypadInput('clear')}
+                      className="h-14 bg-gray-600 hover:bg-gray-700 text-white rounded-xl text-sm font-semibold transition-colors duration-200"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      Clear
+                    </motion.button>
+                    
+                    <motion.button
+                      onClick={() => handleKeypadInput('0')}
+                      className="h-14 bg-white border-2 border-gray-200 rounded-xl text-xl font-semibold text-gray-900 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      0
+                    </motion.button>
+
+                    <motion.button
+                      onClick={() => handleKeypadInput('submit')}
+                      disabled={!currentInput.trim()}
+                      className={`h-14 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                        currentInput.trim() 
+                          ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                          : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      }`}
+                      whileHover={currentInput.trim() ? { scale: 1.05 } : {}}
+                      whileTap={currentInput.trim() ? { scale: 0.95 } : {}}
+                    >
+                      Submit
+                    </motion.button>
+                  </div>
+
+                  {/* Can't See Button */}
+                  <motion.button
+                    onClick={() => handleKeypadInput('cant-see')}
+                    className="w-full h-14 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-semibold transition-colors duration-200"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Can&apos;t See Any Number
+                  </motion.button>
+                </div>
+              </div>
             </div>
           </motion.div>
         </div>
@@ -407,7 +491,7 @@ const ColorBlindnessDashboard = () => {
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-6 mb-8">
               <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
                 <Eye className="w-5 h-5 text-blue-600 mr-2" />
-                AI Analysis &amp; Recommendations
+                AI Analysis & Recommendations
               </h3>
               <p className="text-gray-700 leading-relaxed mb-4">
                 {results.recommendation}
