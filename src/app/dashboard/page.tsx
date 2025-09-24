@@ -33,36 +33,78 @@ interface IshiharaTest {
   difficulty: string;
 }
 
-// Sample Ishihara test data (simplified for keypad input)
+// Real Ishihara test data based on standard plates
 const ishiharaTests: IshiharaTest[] = [
   {
     id: 1,
-    image: "data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='100' cy='100' r='95' fill='%23f0f0f0' stroke='%23ddd' stroke-width='2'/%3E%3Ctext x='100' y='110' text-anchor='middle' font-size='60' font-weight='bold' fill='%2388c999'%3E8%3C/text%3E%3C/svg%3E",
-    correctAnswer: "8",
-    description: "Normal vision should see number 8",
-    difficulty: "easy"
+    image: "/Ishihara/Ishihara_Tests_page-0003.jpg", // Everyone should see 12
+    correctAnswer: "12",
+    description: "Control plate - everyone should see this number",
+    difficulty: "control"
   },
   {
     id: 2,
-    image: "data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='100' cy='100' r='95' fill='%23f0f0f0' stroke='%23ddd' stroke-width='2'/%3E%3Ctext x='100' y='110' text-anchor='middle' font-size='60' font-weight='bold' fill='%23ff6b6b'%3E29%3C/text%3E%3C/svg%3E",
-    correctAnswer: "29",
-    description: "Test for red-green color blindness",
-    difficulty: "medium"
+    image: "/Ishihara/Ishihara_Tests_page-0004.jpg", // Normal: 8, Red-green deficiency: 3
+    correctAnswer: "8",
+    description: "Red-green color blindness screening",
+    difficulty: "easy"
   },
   {
     id: 3,
-    image: "data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='100' cy='100' r='95' fill='%23f0f0f0' stroke='%23ddd' stroke-width='2'/%3E%3Ctext x='100' y='110' text-anchor='middle' font-size='60' font-weight='bold' fill='%234dabf7'%3E5%3C/text%3E%3C/svg%3E",
-    correctAnswer: "5",
-    description: "Blue-yellow color vision test",
-    difficulty: "hard"
+    image: "/Ishihara/Ishihara_Tests_page-0005.jpg", // Normal: 6, Red-green deficiency: 5
+    correctAnswer: "29",
+    description: "Red-green color vision test",
+    difficulty: "easy"
   },
   {
     id: 4,
-    image: "data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='100' cy='100' r='95' fill='%23f0f0f0' stroke='%23ddd' stroke-width='2'/%3E%3Ctext x='100' y='110' text-anchor='middle' font-size='60' font-weight='bold' fill='%2394a3b8'%3E42%3C/text%3E%3C/svg%3E",
-    correctAnswer: "42",
-    description: "Advanced color discrimination test",
+    image: "/Ishihara/Ishihara_Tests_page-0006.jpg", // Normal: 29, Red-green deficiency: 70
+    correctAnswer: "5",
+    description: "Advanced red-green discrimination test",
+    difficulty: "medium"
+  },
+  {
+    id: 5,
+    image: "/Ishihara/Ishihara_Tests_page-0007.jpg", // Normal: 57, Red-green deficiency: 35
+    correctAnswer: "3",
+    description: "Red-green color blindness detection",
+    difficulty: "medium"
+  },
+  {
+    id: 6,
+    image: "/Ishihara/Ishihara_Tests_page-0008.jpg", // Normal: 5, Red-green deficiency: 2
+    correctAnswer: "15",
+    description: "Color discrimination assessment",
+    difficulty: "medium"
+  },
+  {
+    id: 7,
+    image: "/Ishihara/Ishihara_Tests_page-0009.jpg", // Normal: 3, Red-green deficiency: 5
+    correctAnswer: "74",
+    description: "Red-green vision evaluation",
+    difficulty: "medium"
+  },
+  {
+    id: 8,
+    image: "/Ishihara/Ishihara_Tests_page-0010.jpg", // Normal: 15, Red-green deficiency: 17
+    correctAnswer: "6",
+    description: "Color perception test",
     difficulty: "hard"
-  }
+  },
+  {
+    id: 9,
+    image: "/Ishihara/Ishihara_Tests_page-0011.jpg", // Normal: 15, Red-green deficiency: 17
+    correctAnswer: "45",
+    description: "Color perception test",
+    difficulty: "hard"
+  },
+  {
+    id: 10,
+    image: "/Ishihara/Ishihara_Tests_page-0012.jpg", // Normal: 15, Red-green deficiency: 17
+    correctAnswer: "5",
+    description: "Color perception test",
+    difficulty: "hard"
+  },
 ];
 
 const ColorBlindnessDashboard: React.FC = () => {
@@ -154,13 +196,22 @@ const ColorBlindnessDashboard: React.FC = () => {
     let recommendation = "Your color vision appears to be normal. No further testing needed.";
     let severity = "none";
 
-    if (accuracy < 50) {
-      diagnosis = "Possible Color Vision Deficiency";
-      recommendation = "Consider consulting an eye care professional for comprehensive testing.";
+    // More sophisticated analysis based on 10-plate test
+    if (correctAnswers <= 3) {
+      diagnosis = "Significant Color Vision Deficiency";
+      recommendation = "Strong indication of color vision deficiency. Consult an eye care professional immediately for comprehensive testing.";
       severity = "high";
-    } else if (accuracy < 75) {
+    } else if (correctAnswers <= 5) {
+      diagnosis = "Moderate Color Vision Issues";
+      recommendation = "Possible color vision deficiency detected. Professional evaluation recommended.";
+      severity = "high";
+    } else if (correctAnswers <= 7) {
       diagnosis = "Mild Color Vision Issues";
-      recommendation = "Monitor your color vision and consider professional evaluation.";
+      recommendation = "Some color vision difficulties detected. Consider professional consultation.";
+      severity = "medium";
+    } else if (correctAnswers === 8 || correctAnswers === 9) {
+      diagnosis = "Borderline Color Vision";
+      recommendation = "Minor color vision variations detected. Monitor and consider professional evaluation if concerned.";
       severity = "medium";
     }
 
@@ -224,7 +275,7 @@ const ColorBlindnessDashboard: React.FC = () => {
                 className="bg-green-50 border border-green-100 rounded-xl p-6 text-center"
               >
                 <FileText className="w-8 h-8 text-green-600 mx-auto mb-3" />
-                <h3 className="font-semibold text-gray-900 mb-2">4 Questions</h3>
+                <h3 className="font-semibold text-gray-900 mb-2">10 Questions</h3>
                 <p className="text-sm text-gray-600">Comprehensive screening</p>
               </motion.div>
 
@@ -289,7 +340,7 @@ const ColorBlindnessDashboard: React.FC = () => {
 
     return (
       <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -327,20 +378,20 @@ const ColorBlindnessDashboard: React.FC = () => {
             </div>
 
             {/* Main Content - Side by Side Layout */}
-            <div className="grid lg:grid-cols-2 gap-8 items-center">
-              {/* Left Side - Test Image */}
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              {/* Left Side - Test Image (Much Larger) */}
               <div className="flex justify-center">
                 <motion.div
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className="w-80 h-80 bg-white border-2 border-gray-200 rounded-2xl flex items-center justify-center shadow-sm"
+                  className="w-[500px] h-[500px] bg-white border-2 border-gray-200 rounded-2xl flex items-center justify-center shadow-lg p-4"
                 >
                   <Image 
                     src={currentTest.image} 
                     alt="Ishihara color test plate"
-                    width={288}
-                    height={288}
-                    className="w-72 h-72 rounded-xl"
+                    width={450}
+                    height={450}
+                    className="w-[450px] h-[450px] rounded-xl object-contain"
                   />
                 </motion.div>
               </div>
@@ -350,22 +401,22 @@ const ColorBlindnessDashboard: React.FC = () => {
                 {/* Input Display */}
                 <div className="mb-8">
                   <div className="bg-gray-50 border-2 border-gray-200 rounded-xl px-8 py-6 text-center">
-                    <div className="text-sm text-gray-500 mb-2">Your Answer:</div>
-                    <div className="text-3xl font-bold text-gray-900 h-10">
+                    <div className="text-lg text-gray-500 mb-3">Your Answer:</div>
+                    <div className="text-4xl font-bold text-gray-900 h-12">
                       {currentInput || <span className="text-gray-400">Enter number</span>}
                     </div>
                   </div>
                 </div>
 
                 {/* Keypad */}
-                <div className="max-w-sm">
+                <div className="max-w-lg mx-auto">
                   {/* Number Grid */}
-                  <div className="grid grid-cols-3 gap-3 mb-4">
+                  <div className="grid grid-cols-3 gap-6 mb-6">
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
                       <motion.button
                         key={num}
                         onClick={() => handleKeypadInput(num.toString())}
-                        className="h-14 bg-white border-2 border-gray-200 rounded-xl text-xl font-semibold text-gray-900 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200"
+                        className="h-16 w-24 bg-white border-2 border-gray-200 rounded-xl text-3xl font-bold text-gray-900 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 shadow-sm"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                       >
@@ -375,10 +426,10 @@ const ColorBlindnessDashboard: React.FC = () => {
                   </div>
 
                   {/* Zero and Special Buttons */}
-                  <div className="grid grid-cols-3 gap-3 mb-4">
+                  <div className="grid grid-cols-3 gap-6 mb-6">
                     <motion.button
                       onClick={() => handleKeypadInput('clear')}
-                      className="h-14 bg-gray-600 hover:bg-gray-700 text-white rounded-xl text-sm font-semibold transition-colors duration-200"
+                      className="h-16 w-24 bg-gray-600 hover:bg-gray-700 text-white rounded-xl text-lg font-bold transition-colors duration-200 shadow-sm"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -387,7 +438,7 @@ const ColorBlindnessDashboard: React.FC = () => {
                     
                     <motion.button
                       onClick={() => handleKeypadInput('0')}
-                      className="h-14 bg-white border-2 border-gray-200 rounded-xl text-xl font-semibold text-gray-900 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200"
+                      className="h-16 w-24 bg-white border-2 border-gray-200 rounded-xl text-3xl font-bold text-gray-900 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 shadow-sm"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -397,7 +448,7 @@ const ColorBlindnessDashboard: React.FC = () => {
                     <motion.button
                       onClick={() => handleKeypadInput('submit')}
                       disabled={!currentInput.trim()}
-                      className={`h-14 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                      className={`h-16 w-24 rounded-xl text-lg font-bold transition-all duration-200 shadow-sm ${
                         currentInput.trim() 
                           ? 'bg-blue-600 hover:bg-blue-700 text-white' 
                           : 'bg-gray-200 text-gray-400 cursor-not-allowed'
@@ -412,7 +463,7 @@ const ColorBlindnessDashboard: React.FC = () => {
                   {/* Can't See Button */}
                   <motion.button
                     onClick={() => handleKeypadInput('cant-see')}
-                    className="w-full h-14 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-semibold transition-colors duration-200"
+                    className="w-full h-16 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-lg font-bold transition-colors duration-200 shadow-sm"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >

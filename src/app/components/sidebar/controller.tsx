@@ -65,7 +65,7 @@ const SidebarController = () => {
       case 'Inventory':
         router.push('/inventory');
         break;
-      case 'New Chat':
+      case 'New Test':
         router.push('/dashboard');
         break;
       default:
