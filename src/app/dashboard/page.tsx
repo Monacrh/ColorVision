@@ -15,97 +15,100 @@ import {
   Award
 } from 'lucide-react';
 import Image from 'next/image';
+import { IshiharaDecisionTree } from '@/lib/ishiharaDecisionTree';
+import { ishiharaPlates } from '@/lib/ishiharaPlate';
+import { TestAnswer } from '@/types/ishihara';
 
-// Type definitions
-interface TestAnswer {
-  questionId: number;
-  userAnswer: string;
-  correctAnswer: string;
-  isCorrect: boolean;
-  timeToAnswer: number;
-}
+// // Type definitions
+// interface TestAnswer {
+//   questionId: number;
+//   userAnswer: string;
+//   correctAnswer: string;
+//   isCorrect: boolean;
+//   timeToAnswer: number;
+// }
 
-interface IshiharaTest {
-  id: number;
-  image: string;
-  correctAnswer: string;
-  description: string;
-  difficulty: string;
-}
+// interface IshiharaTest {
+//   id: number;
+//   image: string;
+//   correctAnswer: string;
+//   description: string;
+//   difficulty: string;
+// }
 
-// **FIXED**: Corrected the `correctAnswer` values to match standard Ishihara plates.
-const ishiharaTests: IshiharaTest[] = [
-  {
-    id: 1,
-    image: "/Ishihara/Ishihara_Tests_page-0003.jpg", // Plate 3: Everyone should see 12
-    correctAnswer: "12",
-    description: "Control plate - everyone should see this number",
-    difficulty: "control"
-  },
-  {
-    id: 2,
-    image: "/Ishihara/Ishihara_Tests_page-0004.jpg", // Plate 4: Normal: 8, Red-green deficiency: 3
-    correctAnswer: "8",
-    description: "Red-green color blindness screening",
-    difficulty: "easy"
-  },
-  {
-    id: 3,
-    image: "/Ishihara/Ishihara_Tests_page-0005.jpg", // Plate 5: Normal: 29, Red-green deficiency: 70
-    correctAnswer: "29",
-    description: "Red-green color vision test",
-    difficulty: "easy"
-  },
-  {
-    id: 4,
-    image: "/Ishihara/Ishihara_Tests_page-0006.jpg", // Plate 6: Normal: 5, Red-green deficiency: 2
-    correctAnswer: "5",
-    description: "Advanced red-green discrimination test",
-    difficulty: "medium"
-  },
-  {
-    id: 5,
-    image: "/Ishihara/Ishihara_Tests_page-0007.jpg", // Plate 7: Normal: 3, Red-green deficiency: 5
-    correctAnswer: "3",
-    description: "Red-green color blindness detection",
-    difficulty: "medium"
-  },
-  {
-    id: 6,
-    image: "/Ishihara/Ishihara_Tests_page-0008.jpg", // Plate 8: Normal: 15, Red-green deficiency: 17
-    correctAnswer: "15",
-    description: "Color discrimination assessment",
-    difficulty: "medium"
-  },
-  {
-    id: 7,
-    image: "/Ishihara/Ishihara_Tests_page-0009.jpg", // Plate 9: Normal: 74, Red-green deficiency: 21
-    correctAnswer: "74",
-    description: "Red-green vision evaluation",
-    difficulty: "medium"
-  },
-  {
-    id: 8,
-    image: "/Ishihara/Ishihara_Tests_page-0010.jpg", // Plate 10: Normal: 6, Red-green deficiency: Not clear
-    correctAnswer: "6",
-    description: "Color perception test",
-    difficulty: "hard"
-  },
-  {
-    id: 9,
-    image: "/Ishihara/Ishihara_Tests_page-0011.jpg", // Plate 11: Normal: 45, Red-green deficiency: Not clear
-    correctAnswer: "45",
-    description: "Color perception test",
-    difficulty: "hard"
-  },
-  {
-    id: 10,
-    image: "/Ishihara/Ishihara_Tests_page-0012.jpg", // Plate 12: Normal: 5  Red-green deficiency: Not clear
-    correctAnswer: "5",
-    description: "Color perception test",
-    difficulty: "hard"
-  },
-];
+// // **FIXED**: Corrected the `correctAnswer` values to match standard Ishihara plates.
+// const ishiharaTests: IshiharaTest[] = [
+//   {
+//     id: 1,
+//     image: "/Ishihara/Ishihara_Tests_page-0003.jpg", // Plate 3: Everyone should see 12
+//     correctAnswer: "12",
+//     description: "Control plate - everyone should see this number",
+//     difficulty: "control"
+//   },
+//   {
+//     id: 2,
+//     image: "/Ishihara/Ishihara_Tests_page-0004.jpg", // Plate 4: Normal: 8, Red-green deficiency: 3
+//     correctAnswer: "8",
+//     description: "Red-green color blindness screening",
+//     difficulty: "easy"
+//   },
+//   {
+//     id: 3,
+//     image: "/Ishihara/Ishihara_Tests_page-0005.jpg", // Plate 5: Normal: 29, Red-green deficiency: 70
+//     correctAnswer: "29",
+//     description: "Red-green color vision test",
+//     difficulty: "easy"
+//   },
+//   {
+//     id: 4,
+//     image: "/Ishihara/Ishihara_Tests_page-0006.jpg", // Plate 6: Normal: 5, Red-green deficiency: 2
+//     correctAnswer: "5",
+//     description: "Advanced red-green discrimination test",
+//     difficulty: "medium"
+//   },
+//   {
+//     id: 5,
+//     image: "/Ishihara/Ishihara_Tests_page-0007.jpg", // Plate 7: Normal: 3, Red-green deficiency: 5
+//     correctAnswer: "3",
+//     description: "Red-green color blindness detection",
+//     difficulty: "medium"
+//   },
+//   {
+//     id: 6,
+//     image: "/Ishihara/Ishihara_Tests_page-0008.jpg", // Plate 8: Normal: 15, Red-green deficiency: 17
+//     correctAnswer: "15",
+//     description: "Color discrimination assessment",
+//     difficulty: "medium"
+//   },
+//   {
+//     id: 7,
+//     image: "/Ishihara/Ishihara_Tests_page-0009.jpg", // Plate 9: Normal: 74, Red-green deficiency: 21
+//     correctAnswer: "74",
+//     description: "Red-green vision evaluation",
+//     difficulty: "medium"
+//   },
+//   {
+//     id: 8,
+//     image: "/Ishihara/Ishihara_Tests_page-0010.jpg", // Plate 10: Normal: 6, Red-green deficiency: Not clear
+//     correctAnswer: "6",
+//     description: "Color perception test",
+//     difficulty: "hard"
+//   },
+//   {
+//     id: 9,
+//     image: "/Ishihara/Ishihara_Tests_page-0011.jpg", // Plate 11: Normal: 45, Red-green deficiency: Not clear
+//     correctAnswer: "45",
+//     description: "Color perception test",
+//     difficulty: "hard"
+//   },
+//   {
+//     id: 10,
+//     image: "/Ishihara/Ishihara_Tests_page-0012.jpg", // Plate 12: Normal: 5  Red-green deficiency: Not clear
+//     correctAnswer: "5",
+//     description: "Color perception test",
+//     difficulty: "hard"
+//   },
+// ];
 
 const ColorBlindnessDashboard: React.FC = () => {
   const [currentView, setCurrentView] = useState<'welcome' | 'test' | 'results'>('welcome');
@@ -117,18 +120,21 @@ const ColorBlindnessDashboard: React.FC = () => {
   const [testCompleted, setTestCompleted] = useState<boolean>(false);
 
   const handleAnswer = useCallback((answer: string) => {
+    const currentPlate = ishiharaPlates[currentQuestion];
+    const correctAnswer = currentPlate.normalAnswer || currentPlate.deficientAnswer || '';
+    
     const newAnswers: TestAnswer[] = [...answers, {
-      questionId: ishiharaTests[currentQuestion].id,
+      questionId: currentPlate.id,
       userAnswer: answer,
-      correctAnswer: ishiharaTests[currentQuestion].correctAnswer,
-      isCorrect: answer === ishiharaTests[currentQuestion].correctAnswer,
+      correctAnswer: correctAnswer,
+      isCorrect: answer === correctAnswer,
       timeToAnswer: 30 - timeRemaining
     }];
     
     setAnswers(newAnswers);
     setCurrentInput('');
 
-    if (currentQuestion < ishiharaTests.length - 1) {
+    if (currentQuestion < ishiharaPlates.length - 1) {
       setCurrentQuestion(prev => prev + 1);
       setTimeRemaining(30);
     } else {
@@ -139,12 +145,9 @@ const ColorBlindnessDashboard: React.FC = () => {
   }, [answers, currentQuestion, timeRemaining]);
 
   useEffect(() => {
-    // This function will run whenever the component updates.
-    // We only want to save results when the view switches to 'results'.
     if (currentView === 'results' && answers.length > 0) {
-      
       const saveTestResults = async () => {
-        const results = calculateResults(); // You need to calculate results first!
+        const results = calculateResults();
 
         try {
           const response = await fetch('/api/test-results', {
@@ -155,12 +158,15 @@ const ColorBlindnessDashboard: React.FC = () => {
             body: JSON.stringify({
               answers: answers,
               summary: {
-                totalQuestions: ishiharaTests.length,
+                totalQuestions: ishiharaPlates.length,
                 correctAnswers: results.correctAnswers,
                 accuracy: results.accuracy,
                 totalTime: answers.reduce((acc, a) => acc + a.timeToAnswer, 0),
                 diagnosis: results.diagnosis,
                 severity: results.severity,
+                deficiencyType: results.deficiencyType,
+                confidence: results.confidence,
+                details: results.details,
               },
             }),
           });
@@ -225,7 +231,6 @@ const ColorBlindnessDashboard: React.FC = () => {
         handleAnswer(currentInput.trim());
       }
     } else {
-      // Handle number input (limit to 2 digits)
       if (currentInput.length < 2 && !currentInput.includes("Can't see")) {
         setCurrentInput(prev => prev + value);
       }
@@ -233,34 +238,21 @@ const ColorBlindnessDashboard: React.FC = () => {
   };
 
   const calculateResults = () => {
-    const correctAnswers = answers.filter(a => a.isCorrect).length;
-    const accuracy = (correctAnswers / answers.length) * 100;
+    const decisionTree = new IshiharaDecisionTree(ishiharaPlates);
+    const result = decisionTree.analyzeResults(answers);
     
-    let diagnosis = "Normal Color Vision";
-    let recommendation = "Your color vision appears to be normal. No further testing needed.";
-    let severity = "none";
-
-    // **FIXED**: Used `if...else if` to prevent overlapping conditions and ensure correct diagnosis.
-    if (correctAnswers <= 3) {
-      diagnosis = "Significant Color Vision Deficiency";
-      recommendation = "Strong indication of color vision deficiency. Consult an eye care professional immediately for comprehensive testing.";
-      severity = "high";
-    } else if (correctAnswers <= 5) {
-      diagnosis = "Moderate Color Vision Issues";
-      recommendation = "Possible color vision deficiency detected. Professional evaluation recommended.";
-      severity = "high";
-    } else if (correctAnswers <= 7) {
-      diagnosis = "Mild Color Vision Issues";
-      recommendation = "Some color vision difficulties detected. Consider professional consultation.";
-      severity = "medium";
-    } else if (correctAnswers === 8 || correctAnswers === 9) {
-      diagnosis = "Borderline Color Vision";
-      recommendation = "Minor color vision variations detected. Monitor and consider professional evaluation if concerned.";
-      severity = "medium";
-    }
-
-    return { correctAnswers, accuracy, diagnosis, recommendation, severity };
+    return {
+      correctAnswers: result.correctAnswers,
+      accuracy: result.accuracy,
+      diagnosis: result.conclusion,
+      recommendation: result.recommendation,
+      severity: result.severity || 'none',
+      deficiencyType: result.deficiencyType || 'none',
+      confidence: result.confidence,
+      details: result.details
+    };
   };
+
 
   const resetTest = () => {
     setCurrentView('welcome');
@@ -379,8 +371,8 @@ const ColorBlindnessDashboard: React.FC = () => {
 
   // Test Screen
   if (currentView === 'test') {
-    const currentTest = ishiharaTests[currentQuestion];
-    const progress = ((currentQuestion + 1) / ishiharaTests.length) * 100;
+    const currentTest = ishiharaPlates[currentQuestion];
+    const progress = ((currentQuestion + 1) / ishiharaPlates.length) * 100;
 
     return (
       <div className="min-h-screen bg-gray-50 p-6">
@@ -394,9 +386,9 @@ const ColorBlindnessDashboard: React.FC = () => {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-xl font-semibold text-gray-900">
-                  Question {currentQuestion + 1} of {ishiharaTests.length}
+                  Question {currentQuestion + 1} of {ishiharaPlates.length}
                 </h2>
-                <p className="text-gray-600">{currentTest.description}</p>
+                {/* <p className="text-gray-600">{currentTest.description}</p> */}
               </div>
               <div className="text-right">
                 <div className="flex items-center space-x-2 mb-2">
@@ -541,7 +533,7 @@ const ColorBlindnessDashboard: React.FC = () => {
                 animate={{ scale: 1 }}
                 className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 ${
                   results.severity === 'none' ? 'bg-green-600' :
-                  results.severity === 'medium' ? 'bg-amber-600' : 'bg-red-600'
+                  results.severity === 'moderate' ? 'bg-amber-600' : 'bg-red-600'
                 }`}
               >
                 {results.severity === 'none' ? (
