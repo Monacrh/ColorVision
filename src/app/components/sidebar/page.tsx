@@ -7,9 +7,14 @@ import {
   ChevronRight,
   ChevronLeft,
   ChevronDown,
+  RefreshCw,
+  Loader2,
+  CheckCircle,
+  AlertTriangle,
+  XCircle,
 } from 'lucide-react';
-// import Image from "next/image";
 import { useRouter } from 'next/navigation';
+import { TestHistory } from '@/types/history';
 
 interface MenuItem {
   icon: React.ComponentType<{size?: number; className?: string}>;
@@ -22,22 +27,19 @@ interface SubmenuItem {
   label: string;
 }
 
-interface Message {
-  title: string;
-  id: string;
-}
-
 interface SidebarViewProps {
   isDashboardOpen: boolean;
   isCollapsed: boolean;
   menuItems: MenuItem[];
   submenuItems: SubmenuItem[];
-  messages: Message[];
+  messages: TestHistory[];
+  isLoading: boolean;
   selectedMessageId: string | null;
   onToggleCollapse: () => void;
   onDashboardClick: () => void;
   onMenuClick: (label: string) => void;
   onMessageClick: (id: string) => void;
+  onRefreshHistory: () => void;
 }
 
 const SidebarView: React.FC<SidebarViewProps> = ({
@@ -46,13 +48,16 @@ const SidebarView: React.FC<SidebarViewProps> = ({
   menuItems,
   submenuItems,
   messages,
+  isLoading,
   selectedMessageId,
   onToggleCollapse,
   onDashboardClick,
   onMenuClick,
   onMessageClick,
+  onRefreshHistory,
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     if (isCollapsed && scrollContainerRef.current) {
@@ -72,8 +77,47 @@ const SidebarView: React.FC<SidebarViewProps> = ({
     expanded: { opacity: 1, width: 'auto', display: 'block' },
     collapsed: { opacity: 0, width: 0, display: 'none' },
   };
-  
-  const router = useRouter();
+
+  // Get severity icon and color
+  const getSeverityDisplay = (severity: string) => {
+    switch (severity) {
+      case 'none':
+        return { 
+          icon: CheckCircle, 
+          color: 'text-green-500',
+          bg: 'bg-green-50',
+          label: 'Normal'
+        };
+      case 'mild':
+        return { 
+          icon: AlertTriangle, 
+          color: 'text-yellow-500',
+          bg: 'bg-yellow-50',
+          label: 'Mild'
+        };
+      case 'moderate':
+        return { 
+          icon: AlertTriangle, 
+          color: 'text-orange-500',
+          bg: 'bg-orange-50',
+          label: 'Moderate'
+        };
+      case 'severe':
+        return { 
+          icon: XCircle, 
+          color: 'text-red-500',
+          bg: 'bg-red-50',
+          label: 'Severe'
+        };
+      default:
+        return { 
+          icon: AlertTriangle, 
+          color: 'text-gray-500',
+          bg: 'bg-gray-50',
+          label: 'Unknown'
+        };
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
@@ -208,13 +252,6 @@ const SidebarView: React.FC<SidebarViewProps> = ({
                           exit={{ opacity: 0, y: -10 }}
                           transition={{ duration: 0.2 }}
                         >
-                          {isCollapsed && (
-                            <div className="absolute left-0 top-4 transform -translate-x-2">
-                              <div className="w-0 h-0 border-r-[8px] border-r-white border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent"></div>
-                              <div className="absolute left-0 top-0 w-0 h-0 border-r-[9px] border-r-gray-200 border-t-[7px] border-t-transparent border-b-[7px] border-b-transparent transform -translate-x-px"></div>
-                            </div>
-                          )}
-                          
                           <div className={`${isCollapsed ? 'space-y-2' : 'ml-4 mt-2 space-y-1'}`}>
                             {submenuItems.map((subItem, subIndex) => (
                               <motion.button
@@ -252,46 +289,94 @@ const SidebarView: React.FC<SidebarViewProps> = ({
                 >
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Test History
+                      Test History ({messages.length})
                     </h2>
-                    <motion.button 
-                      onClick={() => router.push('/dashboard')}
-                      className="w-8 h-8 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center transition-colors duration-200"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <Plus size={16} />
-                    </motion.button>
+                    <div className="flex items-center space-x-2">
+                      <motion.button 
+                        onClick={onRefreshHistory}
+                        disabled={isLoading}
+                        className="w-8 h-8 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg flex items-center justify-center transition-colors duration-200 disabled:opacity-50"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
+                      </motion.button>
+                      <motion.button 
+                        onClick={() => router.push('/dashboard')}
+                        className="w-8 h-8 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center transition-colors duration-200"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <Plus size={16} />
+                      </motion.button>
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    {messages.map((message, index) => (
-                      <motion.button
-                        key={message.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ delay: index * 0.03 }}
-                        onClick={() => onMessageClick(message.id)}
-                        className={`w-full text-left p-3 rounded-xl transition-all duration-200 ${
-                          selectedMessageId === message.id
-                            ? 'bg-blue-50 border border-blue-200 text-blue-900'
-                            : 'text-gray-700 hover:bg-gray-50'
-                        }`}
-                        whileHover={{ scale: 1.01 }}
-                        whileTap={{ scale: 0.99 }}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-2 h-2 rounded-full ${
-                            selectedMessageId === message.id ? 'bg-blue-500' : 'bg-gray-300'
-                          }`}></div>
-                          <span className="text-sm font-medium truncate">
-                            {message.title}
-                          </span>
-                        </div>
-                      </motion.button>
-                    ))}
-                  </div>
+                  {/* Loading State */}
+                  {isLoading && (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 size={24} className="text-blue-600 animate-spin" />
+                    </div>
+                  )}
+
+                  {/* Empty State */}
+                  {!isLoading && messages.length === 0 && (
+                    <div className="text-center py-8">
+                      <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                        <AlertTriangle size={20} className="text-gray-400" />
+                      </div>
+                      <p className="text-sm text-gray-500">No test history yet</p>
+                      <p className="text-xs text-gray-400 mt-1">Start your first test</p>
+                    </div>
+                  )}
+
+                  {/* History List */}
+                  {!isLoading && messages.length > 0 && (
+                    <div className="space-y-2">
+                      {messages.map((message, index) => {
+                        const severityDisplay = getSeverityDisplay(message.severity);
+                        const SeverityIcon = severityDisplay.icon;
+                        
+                        return (
+                          <motion.button
+                            key={message.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            transition={{ delay: index * 0.03 }}
+                            onClick={() => onMessageClick(message.id)}
+                            className={`w-full text-left p-3 rounded-xl transition-all duration-200 ${
+                              selectedMessageId === message.id
+                                ? 'bg-blue-50 border border-blue-200 shadow-sm'
+                                : 'hover:bg-gray-50 border border-transparent'
+                            }`}
+                            whileHover={{ scale: 1.01 }}
+                            whileTap={{ scale: 0.99 }}
+                          >
+                            <div className="flex items-start space-x-3">
+                              <div className={`flex-shrink-0 w-8 h-8 ${severityDisplay.bg} rounded-lg flex items-center justify-center mt-0.5`}>
+                                <SeverityIcon size={16} className={severityDisplay.color} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate">
+                                  {message.title}
+                                </p>
+                                <div className="flex items-center space-x-2 mt-1">
+                                  <span className={`text-xs font-medium ${severityDisplay.color}`}>
+                                    {severityDisplay.label}
+                                  </span>
+                                  <span className="text-xs text-gray-400">•</span>
+                                  <span className="text-xs text-gray-500">
+                                    {Math.round(message.accuracy)}% accuracy
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -316,6 +401,7 @@ const SidebarView: React.FC<SidebarViewProps> = ({
                     Begin a comprehensive color vision screening with AI-powered analysis
                   </p>
                   <motion.button 
+                    onClick={() => router.push('/dashboard')}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-xl transition-colors duration-200"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -336,6 +422,7 @@ const SidebarView: React.FC<SidebarViewProps> = ({
               exit={{ opacity: 0 }}
             >
               <motion.button 
+                onClick={() => router.push('/dashboard')}
                 className="w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center mx-auto transition-colors duration-200"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}

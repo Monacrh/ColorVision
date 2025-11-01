@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   SquarePen,
@@ -11,14 +11,17 @@ import {
   Settings,
 } from 'lucide-react';
 import SidebarView from './page';
+import { TestHistory } from '@/types/history';
 
 const SidebarController = () => {
   const [isDashboardOpen, setIsDashboardOpen] = useState(true);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
+  const [testHistory, setTestHistory] = useState<TestHistory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  // Static data
+  // Static menu items
   const menuItems = [
     { icon: SquarePen, label: 'New Test' },
     { icon: Library, label: 'History' },
@@ -31,12 +34,31 @@ const SidebarController = () => {
     { icon: BarChart3, label: 'Statistic' },
   ];
 
-  const messages = [
-    { title: "HAPPY - Dec 15", id: "1" },
-    { title: "SAD - Dec 14", id: "2" },
-    { title: "ANGRY - Dec 13", id: "3" },
-    { title: "NEUTRAL - Dec 12", id: "4" },
-  ];
+  // Fetch test history on component mount
+  useEffect(() => {
+    fetchTestHistory();
+  }, []);
+
+  const fetchTestHistory = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/test-results?limit=20');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch test history');
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setTestHistory(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching test history:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Event handlers
   const handleToggleCollapse = () => {
@@ -53,24 +75,43 @@ const SidebarController = () => {
     }
   };
 
-  const handleMessageClick = (id: string) => {
+  const handleMessageClick = async (id: string) => {
     setSelectedMessageId(id);
-    router.push(`/dashboard?session=${id}`);
+    
+    try {
+      // Fetch detailed result
+      const response = await fetch(`/api/test-results?id=${id}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        // Navigate to results page with data
+        router.push(`/results?id=${id}`);
+      }
+    } catch (error) {
+      console.error('Error fetching test detail:', error);
+    }
   };
 
   const handleMenuClick = (label: string) => {
     setSelectedMessageId(null);
   
     switch (label) {
-      case 'Inventory':
-        router.push('/inventory');
-        break;
       case 'New Test':
         router.push('/dashboard');
+        break;
+      case 'History':
+        router.push('/history');
+        break;
+      case 'Settings':
+        router.push('/settings');
         break;
       default:
         break;
     }
+  };
+
+  const handleRefreshHistory = () => {
+    fetchTestHistory();
   };
 
   return (
@@ -79,11 +120,13 @@ const SidebarController = () => {
       isCollapsed={isCollapsed}
       menuItems={menuItems}
       submenuItems={submenuItems}
-      messages={messages}
+      messages={testHistory}
+      isLoading={isLoading}
       onToggleCollapse={handleToggleCollapse}
       onDashboardClick={handleDashboardClick}
       onMenuClick={handleMenuClick}
       onMessageClick={handleMessageClick}
+      onRefreshHistory={handleRefreshHistory}
       selectedMessageId={selectedMessageId}
     />
   );
