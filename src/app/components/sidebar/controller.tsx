@@ -85,7 +85,7 @@ const SidebarController = () => {
       
       if (data.success) {
         // Navigate to results page with data
-        router.push(`/results?id=${id}`);
+        router.push(`/results/${id}`);
       }
     } catch (error) {
       console.error('Error fetching test detail:', error);
