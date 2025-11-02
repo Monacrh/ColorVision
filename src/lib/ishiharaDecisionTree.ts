@@ -250,13 +250,22 @@ export class IshiharaDecisionTree {
     let deuteranopiaScore = 0;
 
     // Plate 14: Normal=26, Protanopia=6, Deuteranopia=2
-    if (plate14?.userAnswer === '6') protanopiaScore++;
-    if (plate14?.userAnswer === '2') deuteranopiaScore++;
+    // deficientAnswer is "6/2" but user can only input one number
+    if (plate14?.userAnswer === '6') {
+      protanopiaScore++;
+    } else if (plate14?.userAnswer === '2') {
+      deuteranopiaScore++;
+    }
     
     // Plate 15: Normal=42, Protanopia=2, Deuteranopia=4
-    if (plate15?.userAnswer === '2') protanopiaScore++;
-    if (plate15?.userAnswer === '4') deuteranopiaScore++;
+    // deficientAnswer is "2/4" but user can only input one number
+    if (plate15?.userAnswer === '2') {
+      protanopiaScore++;
+    } else if (plate15?.userAnswer === '4') {
+      deuteranopiaScore++;
+    }
 
+    // Scoring logic
     if (protanopiaScore > deuteranopiaScore && protanopiaScore > 0) {
       return {
         type: 'protanopia',
@@ -267,7 +276,14 @@ export class IshiharaDecisionTree {
         type: 'deuteranopia',
         explanation: 'Deuteranopia detected (green deficiency)'
       };
+    } else if (protanopiaScore > 0 && deuteranopiaScore > 0 && protanopiaScore === deuteranopiaScore) {
+      // Equal scores - inconclusive between types
+      return {
+        type: 'general',
+        explanation: 'General color deficiency (red-green) - type inconclusive'
+      };
     } else if (protanopiaScore === 0 && deuteranopiaScore === 0) {
+      // User saw normal answers or couldn't see at all
       return {
         type: 'general',
         explanation: 'General color deficiency (red-green)'
