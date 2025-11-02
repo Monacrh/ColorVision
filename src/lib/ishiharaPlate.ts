@@ -98,14 +98,14 @@ export const ishiharaPlates: IshiharaPlate[] = [
   // --- Plat Diagnostik ---
   {
     id: 14,
-    image: "/Ishihara/Ishihara_Tests_page-0016.jpg",
+    image: "/Ishihara/Ishihara_Tests_page-0018.jpg",
     normalAnswer: "26",
     deficientAnswer: "6/2",
     plateType: "diagnostic"
   },
   {
     id: 15,
-    image: "/Ishihara/Ishihara_Tests_page-0017.jpg",
+    image: "/Ishihara/Ishihara_Tests_page-0019.jpg",
     normalAnswer: "42",
     deficientAnswer: "2/4",
     plateType: "diagnostic"
@@ -113,14 +113,14 @@ export const ishiharaPlates: IshiharaPlate[] = [
   // --- Plat lanjutan ---
   {
     id: 16,
-    image: "/Ishihara/Ishihara_Tests_page-0018.jpg",
+    image: "/Ishihara/Ishihara_Tests_page-0016.jpg",
     normalAnswer: "2",
     deficientAnswer: null,
     plateType: "number"
   },
   {
     id: 17,
-    image: "/Ishihara/Ishihara_Tests_page-0019.jpg",
+    image: "/Ishihara/Ishihara_Tests_page-0017.jpg",
     normalAnswer: "6",
     deficientAnswer: null,
     plateType: "number"
@@ -177,6 +177,17 @@ export const ishiharaPlates: IshiharaPlate[] = [
     plateType: "trace"
   }
 ];
+
+// Filtered plates for basic test (exclude trace and hidden)
+export const testPlates: IshiharaPlate[] = ishiharaPlates.filter(
+  plate => plate.plateType !== 'trace' && plate.plateType !== 'hidden_number'
+);
+// Result: 17 plates suitable for number input
+
+// Advanced test (include all)
+export const advancedTestPlates: IshiharaPlate[] = ishiharaPlates;
+
+
 
 // import { IshiharaPlate } from "@/types/ishihara";
 

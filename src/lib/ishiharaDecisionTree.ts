@@ -38,7 +38,7 @@ export class IshiharaDecisionTree {
     if (standardPlatesCheck.normalCount >= 5) {
       const confirmationCheck = this.checkConfirmationPlates(userAnswers);
       
-      if (confirmationCheck.allNormalVisible && !confirmationCheck.hiddenVisible) {
+      if (confirmationCheck.allNormalVisible && !confirmationCheck.hasDeficiencyPattern) {
         return {
           conclusion: "NORMAL COLOR VISION",
           confidence: 95,
@@ -48,7 +48,7 @@ export class IshiharaDecisionTree {
             ...details,
             "✓ All standard plates read perfectly",
             "✓ No color deficiency pattern detected",
-            "✓ Unable to see hidden numbers (normal)"
+            "✓ Visibility plates read correctly"
           ],
           correctAnswers,
           accuracy,
@@ -66,18 +66,14 @@ export class IshiharaDecisionTree {
       
       // NODE 5: Determine deficiency type
       const diagnosticCheck = this.checkDiagnosticPlates(userAnswers);
-      details.push(`🔍 ${diagnosticCheck.explanation}`);
+      if (diagnosticCheck.type !== 'none') {
+        details.push(`🔍 ${diagnosticCheck.explanation}`);
+      }
       
       // NODE 6: Determine severity
       const visibilityCheck = this.checkVisibilityPlates(userAnswers);
       const severity = this.determineSeverity(visibilityCheck);
       details.push(`📈 Severity: ${severity.toUpperCase()} (${visibilityCheck.missedCount}/${visibilityCheck.totalPlates} plates missed)`);
-      
-      // NODE 7: Confirm with hidden plates
-      const hiddenCheck = this.checkHiddenPlates(userAnswers);
-      if (hiddenCheck.canSeeHidden) {
-        details.push("⚠ Can see hidden numbers (confirms deficiency)");
-      }
       
       const severityRecommendations = {
         mild: "Mild color deficiency detected. Consultation with a professional is recommended for further evaluation.",
@@ -94,6 +90,31 @@ export class IshiharaDecisionTree {
         correctAnswers,
         accuracy,
         recommendation: severityRecommendations[severity]
+      };
+    }
+
+    // NODE 7: Check for "Can't see" pattern (deficiency indicator)
+    const cantSeeCheck = this.checkCantSeePattern(userAnswers);
+    if (cantSeeCheck.cantSeeCount >= 3) {
+      details.push(`⚠ Multiple "Can't see" responses detected (${cantSeeCheck.cantSeeCount} plates)`);
+      
+      const diagnosticCheck = this.checkDiagnosticPlates(userAnswers);
+      const visibilityCheck = this.checkVisibilityPlates(userAnswers);
+      const severity = this.determineSeverity(visibilityCheck);
+      
+      return {
+        conclusion: "COLOR VISION DEFICIENCY DETECTED",
+        confidence: 75,
+        deficiencyType: diagnosticCheck.type,
+        severity: severity,
+        details: [
+          ...details,
+          "⚠ Unable to see numbers on multiple plates (deficiency indicator)",
+          diagnosticCheck.type !== 'none' ? `🔍 ${diagnosticCheck.explanation}` : ''
+        ].filter(Boolean),
+        correctAnswers,
+        accuracy,
+        recommendation: "Significant difficulty reading color plates detected. Please consult an eye care professional for comprehensive evaluation."
       };
     }
 
@@ -173,41 +194,57 @@ export class IshiharaDecisionTree {
 
   private checkConfirmationPlates(answers: TestAnswer[]): {
     allNormalVisible: boolean;
-    hiddenVisible: boolean;
+    hasDeficiencyPattern: boolean;
   } {
     const visibilityPlateIds = [8, 9, 10, 11, 12, 13, 16, 17];
-    const hiddenPlateIds = [19, 20, 21];
     
     let normalVisibleCount = 0;
+    let deficiencyPatternCount = 0;
+
     for (const id of visibilityPlateIds) {
       const answer = answers.find(a => a.questionId === id);
       const plate = this.plates.find(p => p.id === id);
-      if (answer && plate && answer.userAnswer === plate.normalAnswer) {
-        normalVisibleCount++;
-      }
-    }
-
-    let hiddenVisibleCount = 0;
-    for (const id of hiddenPlateIds) {
-      const answer = answers.find(a => a.questionId === id);
-      const plate = this.plates.find(p => p.id === id);
-      if (answer && plate && answer.userAnswer === plate.deficientAnswer) {
-        hiddenVisibleCount++;
+      
+      if (answer && plate) {
+        // Check if user saw the normal answer correctly
+        if (answer.userAnswer === plate.normalAnswer) {
+          normalVisibleCount++;
+        } 
+        // Check if user CANNOT see (indicates deficiency)
+        // For plates where deficientAnswer is null, "Can't see" indicates deficiency
+        else if (plate.deficientAnswer === null && 
+                 (answer.userAnswer.toLowerCase().includes("can't see") || 
+                  answer.userAnswer.toLowerCase() === "nothing" ||
+                  answer.userAnswer.trim() === "")) {
+          deficiencyPatternCount++;
+        }
+        // Check if user saw deficient answer (for plates with specific deficient values)
+        else if (plate.deficientAnswer !== null && answer.userAnswer === plate.deficientAnswer) {
+          deficiencyPatternCount++;
+        }
       }
     }
 
     return {
       allNormalVisible: normalVisibleCount >= 6,
-      hiddenVisible: hiddenVisibleCount > 0
+      hasDeficiencyPattern: deficiencyPatternCount >= 3
     };
   }
 
   private checkDiagnosticPlates(answers: TestAnswer[]): {
-    type: 'protanopia' | 'deuteranopia' | 'general';
+    type: 'protanopia' | 'deuteranopia' | 'general' | 'none';
     explanation: string;
   } {
     const plate14 = answers.find(a => a.questionId === 14);
     const plate15 = answers.find(a => a.questionId === 15);
+
+    // If diagnostic plates weren't in the test, return none
+    if (!plate14 && !plate15) {
+      return {
+        type: 'none',
+        explanation: ''
+      };
+    }
 
     let protanopiaScore = 0;
     let deuteranopiaScore = 0;
@@ -220,15 +257,20 @@ export class IshiharaDecisionTree {
     if (plate15?.userAnswer === '2') protanopiaScore++;
     if (plate15?.userAnswer === '4') deuteranopiaScore++;
 
-    if (protanopiaScore > deuteranopiaScore) {
+    if (protanopiaScore > deuteranopiaScore && protanopiaScore > 0) {
       return {
         type: 'protanopia',
         explanation: 'Protanopia detected (red deficiency)'
       };
-    } else if (deuteranopiaScore > protanopiaScore) {
+    } else if (deuteranopiaScore > protanopiaScore && deuteranopiaScore > 0) {
       return {
         type: 'deuteranopia',
         explanation: 'Deuteranopia detected (green deficiency)'
+      };
+    } else if (protanopiaScore === 0 && deuteranopiaScore === 0) {
+      return {
+        type: 'general',
+        explanation: 'General color deficiency (red-green)'
       };
     }
 
@@ -244,6 +286,7 @@ export class IshiharaDecisionTree {
   } {
     const visibilityPlateIds = [8, 9, 10, 11, 12, 13, 16, 17];
     let missedCount = 0;
+    let totalTested = 0;
 
     for (const id of visibilityPlateIds) {
       const answer = answers.find(a => a.questionId === id);
@@ -251,38 +294,48 @@ export class IshiharaDecisionTree {
       
       if (!answer || !plate) continue;
       
+      totalTested++;
+      
+      // If user didn't see the normal answer, count as missed
       if (answer.userAnswer !== plate.normalAnswer) {
         missedCount++;
       }
     }
 
     return {
-      totalPlates: visibilityPlateIds.length,
+      totalPlates: totalTested > 0 ? totalTested : visibilityPlateIds.length,
       missedCount
     };
   }
 
-  private checkHiddenPlates(answers: TestAnswer[]): {
-    canSeeHidden: boolean;
+  // NEW METHOD: Check for "Can't see" pattern
+  private checkCantSeePattern(answers: TestAnswer[]): {
+    cantSeeCount: number;
+    affectedPlates: number[];
   } {
-    const hiddenPlateIds = [19, 20, 21];
-    let hiddenSeenCount = 0;
+    const cantSeeVariations = ["can't see", "cannot see", "can not see", "nothing", "none", ""];
+    let cantSeeCount = 0;
+    const affectedPlates: number[] = [];
 
-    for (const id of hiddenPlateIds) {
-      const answer = answers.find(a => a.questionId === id);
-      const plate = this.plates.find(p => p.id === id);
+    for (const answer of answers) {
+      const normalizedAnswer = answer.userAnswer.toLowerCase().trim();
       
-      if (answer && plate && answer.userAnswer === plate.deficientAnswer) {
-        hiddenSeenCount++;
+      // Check if answer indicates inability to see
+      if (cantSeeVariations.some(variation => normalizedAnswer.includes(variation))) {
+        cantSeeCount++;
+        affectedPlates.push(answer.questionId);
       }
     }
 
     return {
-      canSeeHidden: hiddenSeenCount >= 2
+      cantSeeCount,
+      affectedPlates
     };
   }
 
   private determineSeverity(visibilityCheck: { totalPlates: number; missedCount: number }): 'mild' | 'moderate' | 'severe' {
+    if (visibilityCheck.totalPlates === 0) return 'mild';
+    
     const missedPercentage = (visibilityCheck.missedCount / visibilityCheck.totalPlates) * 100;
     
     if (missedPercentage <= 30) return 'mild';
