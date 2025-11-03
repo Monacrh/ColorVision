@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Eye, 
   CheckCircle, 
@@ -13,7 +13,9 @@ import {
   Calendar,
   TrendingUp,
   Loader2,
-  ArrowLeft
+  ArrowLeft,
+  Briefcase,
+  FileText
 } from 'lucide-react';
 
 interface TestResultDetail {
@@ -45,6 +47,9 @@ export default function ResultsDetailPage() {
   const [result, setResult] = useState<TestResultDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'answers' | 'career'>('answers'); // Tab state
+  const [careerRecommendation, setCareerRecommendation] = useState<string>('');
+  const [isLoadingCareer, setIsLoadingCareer] = useState(false);
 
   useEffect(() => {
     if (params.id) {
@@ -74,6 +79,41 @@ export default function ResultsDetailPage() {
       setIsLoading(false);
     }
   };
+
+  // Fetch career recommendation when switching to career tab
+  const fetchCareerRecommendation = async () => {
+    if (careerRecommendation || !result) return; // Already fetched or no result
+    
+    setIsLoadingCareer(true);
+    try {
+      const response = await fetch('/api/career-recommendation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          severity: result.summary.severity,
+          deficiencyType: result.summary.deficiencyType,
+          diagnosis: result.summary.diagnosis,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setCareerRecommendation(data.recommendation);
+      }
+    } catch (err) {
+      console.error('Error fetching career recommendation:', err);
+      setCareerRecommendation('Unable to load career recommendations at this time.');
+    } finally {
+      setIsLoadingCareer(false);
+    }
+  };
+
+  // Trigger career recommendation fetch when switching to career tab
+  useEffect(() => {
+    if (activeTab === 'career' && !careerRecommendation) {
+      fetchCareerRecommendation();
+    }
+  }, [activeTab]);
 
   // Loading State
   if (isLoading) {
@@ -242,7 +282,35 @@ export default function ResultsDetailPage() {
             </div>
           </div>
 
-          {/* AI Analysis Details */}
+          {/* Tab Switch */}
+          <div className="flex justify-center mb-6">
+            <div className="bg-gray-100 rounded-xl p-1 inline-flex">
+              <button
+                onClick={() => setActiveTab('answers')}
+                className={`flex items-center space-x-2 px-6 py-2.5 rounded-lg font-medium transition-all duration-200 ${
+                  activeTab === 'answers'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <FileText size={18} />
+                <span>Answer Breakdown</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('career')}
+                className={`flex items-center space-x-2 px-6 py-2.5 rounded-lg font-medium transition-all duration-200 ${
+                  activeTab === 'career'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <Briefcase size={18} />
+                <span>Career Guidance</span>
+              </button>
+            </div>
+          </div>
+
+          {/* AI Analysis Details - Always show */}
           {summary.details && summary.details.length > 0 && (
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-6 mb-8">
               <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
@@ -260,49 +328,116 @@ export default function ResultsDetailPage() {
             </div>
           )}
 
-          {/* Detailed Answer Breakdown */}
-          <div className="mb-8">
-            <h3 className="font-semibold text-gray-900 mb-4">Answer Breakdown</h3>
-            <div className="space-y-3">
-              {result.answers.map((answer, index) => (
-                <div 
-                  key={index} 
-                  className={`flex items-center justify-between p-4 rounded-lg ${
-                    answer.isCorrect ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100'
-                  }`}
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold ${
-                      answer.isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                    }`}>
-                      {index + 1}
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-900">
-                        Your answer: <span className="text-blue-600">{answer.userAnswer}</span>
-                      </span>
-                      {!answer.isCorrect && (
-                        <span className="text-gray-500 ml-2">
-                          (Expected: {answer.correctAnswer})
+          {/* Content Section with Animation */}
+          <AnimatePresence mode="wait">
+            {activeTab === 'answers' ? (
+              <motion.div
+                key="answers"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3 }}
+                className="mb-8"
+              >
+                <h3 className="font-semibold text-gray-900 mb-4">Answer Breakdown</h3>
+                <div className="space-y-3">
+                  {result.answers.map((answer, index) => (
+                    <div 
+                      key={index} 
+                      className={`flex items-center justify-between p-4 rounded-lg ${
+                        answer.isCorrect ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold ${
+                          answer.isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                        }`}>
+                          {index + 1}
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-900">
+                            Your answer: <span className="text-blue-600">{answer.userAnswer}</span>
+                          </span>
+                          {!answer.isCorrect && (
+                            <span className="text-gray-500 ml-2">
+                              (Expected: {answer.correctAnswer})
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <span className="text-sm text-gray-500 flex items-center space-x-1">
+                          <Clock size={14} />
+                          <span>{answer.timeToAnswer}s</span>
                         </span>
-                      )}
+                        {answer.isCorrect ? (
+                          <CheckCircle size={20} className="text-green-600" />
+                        ) : (
+                          <XCircle size={20} className="text-red-600" />
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <span className="text-sm text-gray-500 flex items-center space-x-1">
-                      <Clock size={14} />
-                      <span>{answer.timeToAnswer}s</span>
-                    </span>
-                    {answer.isCorrect ? (
-                      <CheckCircle size={20} className="text-green-600" />
-                    ) : (
-                      <XCircle size={20} className="text-red-600" />
-                    )}
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="career"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                className="mb-8"
+              >
+                <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-100 rounded-xl p-6">
+                  <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
+                    <Briefcase className="w-5 h-5 text-purple-600 mr-2" />
+                    Career Recommendations & Guidance
+                  </h3>
+                  
+                  {isLoadingCareer ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 size={32} className="text-purple-600 animate-spin" />
+                      <span className="ml-3 text-gray-600">Generating personalized career guidance...</span>
+                    </div>
+                  ) : careerRecommendation ? (
+                    <div className="prose prose-sm max-w-none">
+                      <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                        {careerRecommendation}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-gray-600">No career recommendations available.</p>
+                  )}
+                </div>
+
+                {/* Additional Info for Career Tab */}
+                {summary.severity !== 'none' && !isLoadingCareer && (
+                  <div className="mt-6 bg-blue-50 border border-blue-100 rounded-xl p-6">
+                    <h4 className="font-semibold text-gray-900 mb-3">Important Notes:</h4>
+                    <ul className="space-y-2 text-sm text-gray-700">
+                      <li className="flex items-start space-x-2">
+                        <span className="text-blue-600 mt-1">•</span>
+                        <span>Color vision deficiency does not limit your potential or intelligence</span>
+                      </li>
+                      <li className="flex items-start space-x-2">
+                        <span className="text-blue-600 mt-1">•</span>
+                        <span>Many successful professionals have color vision deficiency</span>
+                      </li>
+                      <li className="flex items-start space-x-2">
+                        <span className="text-blue-600 mt-1">•</span>
+                        <span>Technology and assistive tools can help in many careers</span>
+                      </li>
+                      <li className="flex items-start space-x-2">
+                        <span className="text-blue-600 mt-1">•</span>
+                        <span>Focus on your strengths and interests when choosing a career path</span>
+                      </li>
+                    </ul>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Disclaimer */}
           {summary.severity !== 'none' && (
