@@ -9,6 +9,7 @@ import Image from 'next/image';
 import { IshiharaDecisionTree } from '@/lib/ishiharaDecisionTree';
 import { testPlates } from '@/lib/ishiharaPlate'; // Use filtered version
 import { TestAnswer } from '@/types/ishihara';
+import { useRouter } from 'next/navigation';
 
 const ColorBlindnessDashboard: React.FC = () => {
   const [currentView, setCurrentView] = useState<'welcome' | 'test' | 'results'>('welcome');
@@ -18,6 +19,7 @@ const ColorBlindnessDashboard: React.FC = () => {
   const [timeRemaining, setTimeRemaining] = useState<number>(30);
   const [testStarted, setTestStarted] = useState<boolean>(false);
   const [testCompleted, setTestCompleted] = useState<boolean>(false);
+  const router = useRouter();
 
   const handleAnswer = useCallback((answer: string) => {
     const currentPlate = testPlates[currentQuestion]; // Changed from ishiharaPlates
@@ -56,7 +58,7 @@ const ColorBlindnessDashboard: React.FC = () => {
             body: JSON.stringify({
               answers: answers,
               summary: {
-                totalQuestions: testPlates.length, // Changed
+                totalQuestions: testPlates.length,
                 correctAnswers: results.correctAnswers,
                 accuracy: results.accuracy,
                 totalTime: answers.reduce((acc, a) => acc + a.timeToAnswer, 0),
@@ -72,17 +74,21 @@ const ColorBlindnessDashboard: React.FC = () => {
           if (!response.ok) throw new Error('Failed to save test results.');
           
           const data = await response.json();
-          if (data.success) {
+          if (data.success && data.id) {
             console.log('Test results saved!', data.id);
+            // Redirect ke halaman result dengan ID
+            router.push(`/results/${data.id}`);
           }
         } catch (error) {
           console.error('Error saving test results:', error);
+          // Fallback: tetap tampilkan results di halaman current jika error
+          setCurrentView('results');
         }
       };
 
       saveTestResults();
     }
-  }, [currentView, answers]);
+  }, [currentView, answers, router]);
 
   // Timer effect (same as before)
   useEffect(() => {
