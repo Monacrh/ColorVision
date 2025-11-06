@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@google/genai": "^1.29.0",
     "framer-motion": "^12.23.18",
     "lucide-react": "^0.544.0",
     "mongodb": "^6.20.0",
