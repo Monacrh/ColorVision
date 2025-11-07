@@ -1,7 +1,8 @@
+// src/app/api/llm/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 
-// 🔑 Inisialisasi Gemini API
+// 🔑 Initialize Gemini API
 const ai = new GoogleGenAI({
   apiKey: process.env.GOOGLE_GEMINI_API_KEY || "",
 });
@@ -11,7 +12,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { severity, deficiencyType, diagnosis } = body;
 
-    // 🧩 Validasi input
+    // 🧩 Validate input
     if (!severity || !deficiencyType || !diagnosis) {
       return NextResponse.json(
         {
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 🪄 Prompt lengkap untuk AI
+    // 🪄 Improved prompt with strict formatting
     const prompt = `
 You are a compassionate career counselor specializing in color vision deficiency. 
 A person has just received their color vision test results and needs personalized career guidance.
@@ -32,88 +33,115 @@ TEST RESULTS:
 - Severity: ${severity}
 - Deficiency Type: ${deficiencyType}
 
-Please provide a comprehensive, empathetic, and structured career consultation that includes:
+IMPORTANT: You MUST use EXACTLY this format with these exact section headers. Do not add extra sections or change the header names.
 
-1. **Personalized Assessment (150-200 words)**
-   - Acknowledge their results with empathy
-   - Explain what their specific condition means
-   - Reassure them that this doesn't limit their potential
-   - Mention statistics (8% men, 0.5% women have color deficiency)
+## **1. Personalized Assessment**
+Start with a warm, empathetic greeting. Acknowledge their results and explain what they mean in simple terms. Reassure them that this doesn't limit their potential. Mention that approximately 8% of men and 0.5% of women have color vision deficiency. Keep this section to 150-200 words.
 
-2. **Understanding Your Condition (100-150 words)**
-   - Explain ${deficiencyType} in simple terms
-   - How it affects daily life
-   - Common challenges they might face
+## **2. Understanding Your Condition**
+Explain ${deficiencyType} in simple, clear terms. Describe how it affects daily life and what specific challenges they might face. Focus on practical examples and be encouraging. Keep this section to 100-150 words.
 
-3. **Career Paths - Highly Recommended (300-400 words)**
-   - List 10-15 careers that are EXCELLENT matches
-   - Group by categories (Technology, Business, Healthcare, Education, etc.)
-   - For 2-3 top careers, provide:
-     * Why it's suitable
-     * Salary range
-     * Growth potential
-     * Accessibility features available
+## **3. Career Paths - Highly Recommended**
+List 10-15 excellent career matches grouped by categories (Technology, Business, Healthcare, Education, etc.). For 2-3 top careers, provide detailed information including why it's suitable, salary range, growth potential, and accessibility features. Use bullet points with - for each career. Keep this section to 300-400 words.
 
-4. **Careers Requiring Accommodations (150-200 words)**
-   - List 5-8 careers that are POSSIBLE but need tools/accommodations
-   - For each, explain:
-     * What challenges they'll face
-     * What tools/accommodations can help
-     * Success rate with accommodations
+- Software Developer: Excellent choice because coding relies on logic, not color perception. Most IDEs offer customizable color themes.
+- Data Analyst: Works with numbers and statistics. Data visualization tools can use color-blind friendly palettes.
+- Accountant: Focuses on numbers and regulations, not colors.
+- Project Manager: Relies on organization and communication skills.
+- Technical Writer: Creates documentation using words, not colors.
 
-5. **Careers to Avoid (100-150 words)**
-   - List 5-7 careers NOT recommended
-   - Brief explanation why (safety, regulations, high color dependency)
-   - Be honest but gentle
+## **4. Careers Requiring Accommodations**
+List 5-8 careers that are possible with tools and accommodations. For each, explain the challenges and what accommodations can help. Use bullet points with - for each career. Keep this section to 150-200 words.
 
-6. **Assistive Technology & Tools (150-200 words)**
-   - Mobile apps (ColorBlind Pal, Color Name AR, etc.)
-   - Browser extensions (Colorblindly, etc.)
-   - Hardware solutions if applicable
-   - Workplace accommodations
+- Graphic Designer: Challenges with color selection. Accommodations: Color picker tools, colleague verification, accessibility plugins.
+- UX/UI Designer: Challenges with color contrast. Accommodations: WCAG guidelines, contrast checkers, automated tools.
+- Lab Technician: Challenges with color-coded tests. Accommodations: Digital instruments, labeled samples.
 
-7. **Success Strategies (100-150 words)**
-   - How to leverage their strengths
-   - Communication tips with employers
-   - Building confidence
-   - Advocacy resources
+## **5. Careers to Avoid**
+List 5-7 careers not recommended due to safety concerns or strict color vision requirements. Be honest but gentle in your explanation. Use bullet points with - for each career. Keep this section to 100-150 words.
 
-8. **Closing Encouragement (100 words)**
-   - Inspirational message
-   - Famous people with color deficiency who succeeded
-   - Reminder that this doesn't define them
+- Commercial Pilot: Strict FAA color vision requirements for safety.
+- Electrician: Color-coded wiring systems pose safety risks.
+- Firefighter: Emergency situations require quick color identification.
 
-FORMAT REQUIREMENTS:
-- Use clear section headers with emojis
-- Write in a warm, conversational, yet professional tone
+## **6. Assistive Technology & Tools**
+List helpful tools, apps, and technologies. Include mobile apps, browser extensions, and workplace accommodations. Use bullet points with - for each tool. Keep this section to 150-200 words.
+
+- ColorBlind Pal: Mobile app that identifies colors using camera.
+- Colorblindly: Browser extension that adjusts website colors.
+- EnChroma Glasses: Special glasses that can enhance color perception for some users.
+
+## **7. Success Strategies**
+Provide actionable advice and strategies for success. Focus on strengths, communication, and confidence building. Use bullet points with - for each strategy. Keep this section to 100-150 words.
+
+- Leverage your strengths in pattern recognition and attention to detail.
+- Be proactive about discussing accommodations with employers.
+- Use technology tools to assist with color-related tasks.
+
+## **8. Closing Encouragement**
+End with an inspirational, uplifting message. Mention famous successful people with color vision deficiency. Remind them that this doesn't define their potential. Keep this section to about 100 words.
+
+Remember to:
+- Use the EXACT section headers above
+- Write in a warm, empathetic, professional tone
 - Be specific with career names and tools
-- Include practical, actionable advice
+- Use bullet points with - for all lists
+- Keep paragraphs concise and readable
 - Balance realism with optimism
-- Use bullet points for lists
-- Keep paragraphs short and readable
 
-TONE: Empathetic, encouraging, honest, professional, supportive
-LENGTH: Aim for 1500-2000 words total
-
-Begin your consultation:
+Begin your response now:
 `;
 
-    // 🤖 Panggil model Gemini terbaru
+    // 🤖 Call Gemini model (without generationConfig)
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash", // bisa ganti "gemini-2.0-pro" untuk hasil lebih detail
+      model: "gemini-2.0-flash",
       contents: prompt,
     });
 
-    // 🧾 Ambil hasil teks dari response
+    // 🧾 Get text from response and clean formatting
     const recommendation = response.text;
+
+    if (!recommendation) {
+      throw new Error("No response generated from AI model");
+    }
+
+    // Clean and format the response
+    const cleanedRecommendation = recommendation
+      .replace(/\*\*(.*?)\*\*/g, '**$1**') // Ensure bold formatting
+      .replace(/###/g, '##') // Normalize headers
+      .replace(/\n{3,}/g, '\n\n') // Remove excessive newlines
+      .replace(/##\s+\*\*/g, '## **') // Ensure consistent spacing
+      .trim();
+
+    // Verify the response has the required sections
+    const requiredSections = [
+      '## **1. Personalized Assessment**',
+      '## **2. Understanding Your Condition**',
+      '## **3. Career Paths - Highly Recommended**',
+      '## **4. Careers Requiring Accommodations**',
+      '## **5. Careers to Avoid**',
+      '## **6. Assistive Technology & Tools**',
+      '## **7. Success Strategies**',
+      '## **8. Closing Encouragement**'
+    ];
+
+    const hasAllSections = requiredSections.every(section => 
+      cleanedRecommendation.includes(section)
+    );
+
+    if (!hasAllSections) {
+      console.warn('LLM response missing some sections, but proceeding anyway');
+    }
 
     return NextResponse.json(
       {
         success: true,
-        recommendation,
+        recommendation: cleanedRecommendation,
         metadata: {
-          model: "gemini-2.5-flash",
+          model: "gemini-2.0-flash",
           generatedAt: new Date().toISOString(),
+          sectionsPresent: hasAllSections,
+          contentLength: cleanedRecommendation.length
         },
       },
       { status: 200 }
@@ -131,23 +159,27 @@ Begin your consultation:
   }
 }
 
-// 🧭 GET endpoint opsional untuk cek status API
+// 🧭 GET endpoint for API status check
 export async function GET() {
   try {
     const hasKey = !!process.env.GOOGLE_GEMINI_API_KEY;
+    const apiStatus = hasKey ? "configured" : "missing_api_key";
+    
     return NextResponse.json(
       {
         success: true,
         message: "Career recommendation API is active",
-        configured: hasKey,
+        status: apiStatus,
+        timestamp: new Date().toISOString(),
       },
       { status: 200 }
     );
-  } catch {
+  } catch (error) {
     return NextResponse.json(
       {
         success: false,
         message: "API configuration error",
+        error: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );
