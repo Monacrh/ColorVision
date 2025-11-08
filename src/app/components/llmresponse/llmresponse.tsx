@@ -207,7 +207,7 @@ const LLMResponseRenderer: React.FC<LLMResponseRendererProps> = ({
         </motion.div>
       )}
 
-      {/* Section 3: Career Paths - Highly Recommended */}
+      {/* Section 3: Career Paths - Highly Recommended - SAME DESIGN AS SECTION 4 */}
       {section3 && (
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -234,22 +234,15 @@ const LLMResponseRenderer: React.FC<LLMResponseRendererProps> = ({
           </div>
 
           {parseListItems(section3).length > 0 && (
-            <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
-              <h4 className="font-semibold text-gray-900 mb-4 text-base">Recommended Careers:</h4>
-              <div className="flex flex-wrap gap-3">
-                {parseListItems(section3).map((career, idx) => (
-                  <motion.span 
-                    key={idx}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-xl text-sm font-medium text-gray-900 hover:shadow-md hover:scale-105 transition-all duration-200 cursor-default"
-                  >
-                    <CheckCircle size={14} className="mr-2 text-green-600" />
-                    {career}
-                  </motion.span>
-                ))}
-              </div>
+            <div className="space-y-3">
+              {parseListItems(section3).map((item, idx) => (
+                <div key={idx} className="bg-white rounded-xl p-4 shadow-sm border border-emerald-200">
+                  <div className="flex items-start">
+                    <CheckCircle size={18} className="text-emerald-600 mr-3 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-700 leading-relaxed">{item}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </motion.div>
@@ -315,15 +308,15 @@ const LLMResponseRenderer: React.FC<LLMResponseRendererProps> = ({
           </div>
 
           {parseListItems(section5).length > 0 ? (
-            <div className="bg-white rounded-xl p-5 shadow-sm border border-red-200">
-              <div className="space-y-3">
-                {parseListItems(section5).map((item, idx) => (
-                  <div key={idx} className="flex items-start">
+            <div className="space-y-3">
+              {parseListItems(section5).map((item, idx) => (
+                <div key={idx} className="bg-white rounded-xl p-4 shadow-sm border border-red-200">
+                  <div className="flex items-start">
                     <XCircle size={18} className="text-red-600 mr-3 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-gray-700 leading-relaxed">{item}</span>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           ) : (
             <div className="prose prose-sm max-w-none">
