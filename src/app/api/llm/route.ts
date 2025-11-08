@@ -41,14 +41,12 @@ Start with a warm, empathetic greeting. Acknowledge their results and explain wh
 ## **2. Understanding Your Condition**
 Explain ${deficiencyType} in simple, clear terms. Describe how it affects daily life and what specific challenges they might face. Focus on practical examples and be encouraging. Keep this section to 100-150 words.
 
-## **3. Career Paths - Highly Recommended**
-List 10-15 excellent career matches grouped by categories (Technology, Business, Healthcare, Education, etc.). For 2-3 top careers, provide detailed information including why it's suitable, salary range, growth potential, and accessibility features. Use bullet points with - for each career. Keep this section to 300-400 words.
+## **3. Career Paths - Highly Recommended (300-400 words)**
+   - List 10-15 careers that are EXCELLENT matches
+   - For each careers, provide:
+    + For each career, use this format on a single bullet line:
+    + - [Career Name]: Why it's suitable; Accessibility features.
 
-- Software Developer: Excellent choice because coding relies on logic, not color perception. Most IDEs offer customizable color themes.
-- Data Analyst: Works with numbers and statistics. Data visualization tools can use color-blind friendly palettes.
-- Accountant: Focuses on numbers and regulations, not colors.
-- Project Manager: Relies on organization and communication skills.
-- Technical Writer: Creates documentation using words, not colors.
 
 ## **4. Careers Requiring Accommodations**
 List 5-8 careers that are possible with tools and accommodations. For each, explain the challenges and what accommodations can help. Use bullet points with - for each career. Keep this section to 150-200 words.

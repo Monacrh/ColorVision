@@ -276,14 +276,36 @@ const LLMResponseRenderer: React.FC<LLMResponseRendererProps> = ({
 
           {parseListItems(section4).length > 0 && (
             <div className="space-y-3">
-              {parseListItems(section4).map((item, idx) => (
-                <div key={idx} className="bg-white rounded-xl p-4 shadow-sm border border-amber-200">
-                  <div className="flex items-start">
-                    <AlertTriangle size={18} className="text-amber-600 mr-3 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-gray-700 leading-relaxed">{item}</span>
+              {parseListItems(section4).map((item, idx) => {
+                const [jobPart, accomPart] = item.split(/Accommodations:/i);
+                return (
+                  <div
+                    key={idx}
+                    className="bg-white rounded-xl p-4 shadow-sm border border-amber-200"
+                  >
+                    <div className="flex items-start mb-2">
+                      <AlertTriangle
+                        size={18}
+                        className="text-amber-600 mr-3 mt-0.5 flex-shrink-0"
+                      />
+                      <div>
+                        {/* 🔹 Job name + challenges */}
+                        <p className="text-sm text-gray-800 leading-relaxed font-medium">
+                          {jobPart?.trim()}
+                        </p>
+
+                        {/* 🔸 Accommodations (jika ada) */}
+                        {accomPart && (
+                          <p className="text-sm text-gray-700 leading-relaxed mt-1">
+                            <span className="font-semibold text-amber-700">Accommodations:</span>{' '}
+                            {accomPart.trim()}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </motion.div>
@@ -308,15 +330,15 @@ const LLMResponseRenderer: React.FC<LLMResponseRendererProps> = ({
           </div>
 
           {parseListItems(section5).length > 0 ? (
-            <div className="space-y-3">
-              {parseListItems(section5).map((item, idx) => (
-                <div key={idx} className="bg-white rounded-xl p-4 shadow-sm border border-red-200">
-                  <div className="flex items-start">
+            <div className="bg-white rounded-xl p-5 shadow-sm border border-red-200">
+              <div className="space-y-3">
+                {parseListItems(section5).map((item, idx) => (
+                  <div key={idx} className="flex items-start">
                     <XCircle size={18} className="text-red-600 mr-3 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-gray-700 leading-relaxed">{item}</span>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           ) : (
             <div className="prose prose-sm max-w-none">
