@@ -16,11 +16,12 @@ import {
   Loader2,
   ArrowLeft,
   Briefcase,
-  FileText
+  FileText,
+  Star // <-- Impor ikon Star
 } from 'lucide-react';
 import LLMResponseRenderer from '../../components/llmresponse/llmresponse';
 
-// Perbarui interface untuk menyertakan rekomendasi
+// Interface tetap sama
 interface TestResultDetail {
   _id: string;
   testDate: Date;
@@ -42,7 +43,7 @@ interface TestResultDetail {
     confidence: number;
     details: string[];
   };
-  careerRecommendation?: string; // <-- TAMBAHKAN INI
+  careerRecommendation?: string;
 }
 
 export default function ResultsDetailPage() {
@@ -69,7 +70,6 @@ export default function ResultsDetailPage() {
       
       if (data.success) {
         setResult(data.data);
-        // Jika rekomendasi sudah ada di DB, langsung set
         if (data.data.careerRecommendation) {
           setCareerRecommendation(data.data.careerRecommendation);
         }
@@ -89,19 +89,19 @@ export default function ResultsDetailPage() {
     }
   }, [params.id, fetchResultDetail]);
 
-  // Fungsi baru untuk menangani generasi DAN penyimpanan
+  // Fungsi untuk menangani generasi DAN penyimpanan
   const handleGenerateRecommendation = async (forceRegenerate: boolean = false) => {
     if (!result) return;
     
-    // 1. Cek apakah perlu fetch
-    // Jika sudah ada rekomendasi DAN tidak dipaksa, jangan lakukan apa-apa
+    // PENGECEKAN TAMBAHAN: Jangan pernah generate jika severity 'none'
+    if (result.summary.severity === 'none') return;
+
     if (careerRecommendation && !forceRegenerate) {
       return;
     }
     
     setIsLoadingCareer(true);
     try {
-      // 2. Panggil API LLM untuk mendapatkan rekomendasi baru
       const llmResponse = await fetch('/api/llm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -118,21 +118,19 @@ export default function ResultsDetailPage() {
       }
 
       const newRecommendation = llmData.recommendation;
-      setCareerRecommendation(newRecommendation); // Tampilkan di UI
+      setCareerRecommendation(newRecommendation); 
 
-      // 3. Simpan rekomendasi baru ke database
       await fetch(`/api/test-results?id=${result._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           recommendation: newRecommendation,
-          metadata: llmData.metadata // Kirim juga metadata dari LLM response
+          metadata: llmData.metadata
         }),
       });
 
     } catch (err) {
       console.error('Error handling career recommendation:', err);
-      // Hanya tampilkan error jika kita benar-benar tidak punya apa-apa untuk ditampilkan
       if (!careerRecommendation) {
         setCareerRecommendation('Unable to load career recommendations at this time. Please try again later.');
       }
@@ -141,11 +139,10 @@ export default function ResultsDetailPage() {
     }
   };
 
-  // useEffect untuk memicu fetch saat tab diganti (jika data belum ada)
   useEffect(() => {
-    // Jika user pindah ke tab 'career' DAN rekomendasi belum ada, DAN result sudah ada, DAN tidak sedang loading
+    // Logika ini sekarang aman karena jika severity 'none', activeTab tidak akan pernah menjadi 'career'
     if (activeTab === 'career' && !careerRecommendation && result && !isLoadingCareer) {
-      handleGenerateRecommendation(false); // Panggil (jangan paksa)
+      handleGenerateRecommendation(false); 
     }
   }, [activeTab, careerRecommendation, result, isLoadingCareer]);
 
@@ -316,33 +313,35 @@ export default function ResultsDetailPage() {
             </div>
           </div>
 
-          {/* Tab Switch */}
-          <div className="flex justify-center mb-6">
-            <div className="bg-gray-100 rounded-xl p-1 inline-flex">
-              <button
-                onClick={() => setActiveTab('answers')}
-                className={`flex items-center space-x-2 px-6 py-2.5 rounded-lg font-medium transition-all duration-200 ${
-                  activeTab === 'answers'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <FileText size={18} />
-                <span>Answer Breakdown</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('career')}
-                className={`flex items-center space-x-2 px-6 py-2.5 rounded-lg font-medium transition-all duration-200 ${
-                  activeTab === 'career'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <Briefcase size={18} />
-                <span>AI Career Guidance</span>
-              </button>
+          {/* Tab Switch - SEKARANG KONDISIONAL */}
+          {summary.severity !== 'none' && (
+            <div className="flex justify-center mb-6">
+              <div className="bg-gray-100 rounded-xl p-1 inline-flex">
+                <button
+                  onClick={() => setActiveTab('answers')}
+                  className={`flex items-center space-x-2 px-6 py-2.5 rounded-lg font-medium transition-all duration-200 ${
+                    activeTab === 'answers'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <FileText size={18} />
+                  <span>Answer Breakdown</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab('career')}
+                  className={`flex items-center space-x-2 px-6 py-2.5 rounded-lg font-medium transition-all duration-200 ${
+                    activeTab === 'career'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <Briefcase size={18} />
+                  <span>AI Career Guidance</span>
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* AI Analysis Details */}
           {summary.details && summary.details.length > 0 && activeTab === 'answers' && (
@@ -364,7 +363,8 @@ export default function ResultsDetailPage() {
 
           {/* Content Section with Animation */}
           <AnimatePresence mode="wait">
-            {activeTab === 'answers' ? (
+            {/* Tampilkan Answer Breakdown jika tab 'answers' ATAU jika severity 'none' */}
+            {activeTab === 'answers' && (
               <motion.div
                 key="answers"
                 initial={{ opacity: 0, x: -20 }}
@@ -382,6 +382,7 @@ export default function ResultsDetailPage() {
                         answer.isCorrect ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100'
                       }`}
                     >
+                      {/* ... (isi answer breakdown tetap sama) ... */}
                       <div className="flex items-center space-x-4">
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold ${
                           answer.isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
@@ -414,7 +415,10 @@ export default function ResultsDetailPage() {
                   ))}
                 </div>
               </motion.div>
-            ) : (
+            )}
+
+            {/* HANYA tampilkan career jika tab 'career' DAN severity BUKAN 'none' */}
+            {activeTab === 'career' && summary.severity !== 'none' && (
               <motion.div
                 key="career"
                 initial={{ opacity: 0, x: 20 }}
@@ -434,10 +438,9 @@ export default function ResultsDetailPage() {
                     content={careerRecommendation}
                     deficiencyType={summary.deficiencyType}
                     severity={summary.severity}
-                    onRegenerate={() => handleGenerateRecommendation(true)} // <-- Panggil dengan (true)
+                    onRegenerate={() => handleGenerateRecommendation(true)}
                   />
                 ) : (
-                  // State ini seharusnya jarang terlihat, tapi sebagai fallback
                   <div className="bg-gray-50 border border-gray-200 rounded-xl p-8 text-center">
                     <AlertTriangle size={48} className="text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-600 mb-4">No career recommendations loaded.</p>
@@ -475,6 +478,30 @@ export default function ResultsDetailPage() {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* TAMBAHAN: Pesan untuk Penglihatan Normal */}
+          {summary.severity === 'none' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+              className="mb-8"
+            >
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 rounded-xl p-6 text-center">
+                <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Star size={32} className="text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  No Career Guidance Needed
+                </h3>
+                <p className="text-gray-700 max-w-lg mx-auto">
+                  Your test results indicate **Normal Color Vision**. 
+                  You should not face any career restrictions related to color vision. 
+                  Therefore, specialized AI career guidance is not required.
+                </p>
+              </div>
+            </motion.div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-gray-100">
