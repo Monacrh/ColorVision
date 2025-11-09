@@ -1,7 +1,7 @@
 // src/app/results/[id]/page.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import LLMResponseRenderer from '../../components/llmresponse/llmresponse';
 
+// Perbarui interface untuk menyertakan rekomendasi
 interface TestResultDetail {
   _id: string;
   testDate: Date;
@@ -41,6 +42,7 @@ interface TestResultDetail {
     confidence: number;
     details: string[];
   };
+  careerRecommendation?: string; // <-- TAMBAHKAN INI
 }
 
 export default function ResultsDetailPage() {
@@ -53,13 +55,8 @@ export default function ResultsDetailPage() {
   const [careerRecommendation, setCareerRecommendation] = useState<string>('');
   const [isLoadingCareer, setIsLoadingCareer] = useState(false);
 
-  useEffect(() => {
-    if (params.id) {
-      fetchResultDetail(params.id as string);
-    }
-  }, [params.id]);
-
-  const fetchResultDetail = async (id: string) => {
+  // Menggunakan useCallback agar fungsi ini stabil
+  const fetchResultDetail = useCallback(async (id: string) => {
     try {
       setIsLoading(true);
       const response = await fetch(`/api/test-results?id=${id}`);
@@ -72,6 +69,10 @@ export default function ResultsDetailPage() {
       
       if (data.success) {
         setResult(data.data);
+        // Jika rekomendasi sudah ada di DB, langsung set
+        if (data.data.careerRecommendation) {
+          setCareerRecommendation(data.data.careerRecommendation);
+        }
       } else {
         setError('Test result not found');
       }
@@ -80,14 +81,28 @@ export default function ResultsDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const fetchCareerRecommendation = async () => {
-    if (careerRecommendation || !result) return;
+  useEffect(() => {
+    if (params.id) {
+      fetchResultDetail(params.id as string);
+    }
+  }, [params.id, fetchResultDetail]);
+
+  // Fungsi baru untuk menangani generasi DAN penyimpanan
+  const handleGenerateRecommendation = async (forceRegenerate: boolean = false) => {
+    if (!result) return;
+    
+    // 1. Cek apakah perlu fetch
+    // Jika sudah ada rekomendasi DAN tidak dipaksa, jangan lakukan apa-apa
+    if (careerRecommendation && !forceRegenerate) {
+      return;
+    }
     
     setIsLoadingCareer(true);
     try {
-      const response = await fetch('/api/llm', {
+      // 2. Panggil API LLM untuk mendapatkan rekomendasi baru
+      const llmResponse = await fetch('/api/llm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -97,25 +112,42 @@ export default function ResultsDetailPage() {
         }),
       });
 
-      const data = await response.json();
-      if (data.success) {
-        setCareerRecommendation(data.recommendation);
-      } else {
-        throw new Error(data.message || 'Failed to generate recommendation');
+      const llmData = await llmResponse.json();
+      if (!llmData.success) {
+        throw new Error(llmData.message || 'Failed to generate recommendation');
       }
+
+      const newRecommendation = llmData.recommendation;
+      setCareerRecommendation(newRecommendation); // Tampilkan di UI
+
+      // 3. Simpan rekomendasi baru ke database
+      await fetch(`/api/test-results?id=${result._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recommendation: newRecommendation,
+          metadata: llmData.metadata // Kirim juga metadata dari LLM response
+        }),
+      });
+
     } catch (err) {
-      console.error('Error fetching career recommendation:', err);
-      setCareerRecommendation('Unable to load career recommendations at this time. Please try again later.');
+      console.error('Error handling career recommendation:', err);
+      // Hanya tampilkan error jika kita benar-benar tidak punya apa-apa untuk ditampilkan
+      if (!careerRecommendation) {
+        setCareerRecommendation('Unable to load career recommendations at this time. Please try again later.');
+      }
     } finally {
       setIsLoadingCareer(false);
     }
   };
 
+  // useEffect untuk memicu fetch saat tab diganti (jika data belum ada)
   useEffect(() => {
-    if (activeTab === 'career' && !careerRecommendation && result) {
-      fetchCareerRecommendation();
+    // Jika user pindah ke tab 'career' DAN rekomendasi belum ada, DAN result sudah ada, DAN tidak sedang loading
+    if (activeTab === 'career' && !careerRecommendation && result && !isLoadingCareer) {
+      handleGenerateRecommendation(false); // Panggil (jangan paksa)
     }
-  }, [activeTab, careerRecommendation, result]);
+  }, [activeTab, careerRecommendation, result, isLoadingCareer]);
 
   // Loading State
   if (isLoading) {
@@ -402,17 +434,15 @@ export default function ResultsDetailPage() {
                     content={careerRecommendation}
                     deficiencyType={summary.deficiencyType}
                     severity={summary.severity}
-                    onRegenerate={() => {
-                      setCareerRecommendation('');
-                      fetchCareerRecommendation();
-                    }}
+                    onRegenerate={() => handleGenerateRecommendation(true)} // <-- Panggil dengan (true)
                   />
                 ) : (
+                  // State ini seharusnya jarang terlihat, tapi sebagai fallback
                   <div className="bg-gray-50 border border-gray-200 rounded-xl p-8 text-center">
                     <AlertTriangle size={48} className="text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600 mb-4">No career recommendations available</p>
+                    <p className="text-gray-600 mb-4">No career recommendations loaded.</p>
                     <button
-                      onClick={() => fetchCareerRecommendation()}
+                      onClick={() => handleGenerateRecommendation(false)}
                       className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
                     >
                       Generate Recommendations

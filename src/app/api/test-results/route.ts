@@ -1,6 +1,7 @@
 // src/app/api/test-results/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import clientPromise from '@/lib/mongodb';
+import { ObjectId } from 'mongodb'; // <-- Impor ObjectId
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,6 +15,8 @@ export async function POST(request: NextRequest) {
       testDate: new Date(),
       answers: body.answers,
       summary: body.summary,
+      careerRecommendation: null, // <-- TAMBAHKAN INI
+      careerRecommendationMetadata: null, // <-- Tambahkan ini untuk metadata
       metadata: {
         browserInfo: request.headers.get('user-agent'),
       },
@@ -31,7 +34,6 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error saving test result:', error);
     
-    // Fix untuk TypeScript error
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     
     return NextResponse.json({
@@ -54,8 +56,11 @@ export async function GET(request: NextRequest) {
 
     // If ID is provided, fetch specific test result
     if (id) {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { ObjectId } = require('mongodb');
+      // Validasi ObjectId
+      if (!ObjectId.isValid(id)) {
+        return NextResponse.json({ success: false, message: 'Invalid test ID format' }, { status: 400 });
+      }
+
       const result = await collection.findOne({ _id: new ObjectId(id) });
       
       if (!result) {
@@ -65,13 +70,14 @@ export async function GET(request: NextRequest) {
         }, { status: 404 });
       }
 
+      // Data yang dikembalikan sekarang akan otomatis menyertakan careerRecommendation jika ada
       return NextResponse.json({
         success: true,
         data: result,
       }, { status: 200 });
     }
 
-    // Fetch list of test results
+    // Fetch list of test results (tidak berubah)
     const results = await collection
       .find({})
       .sort({ testDate: -1 })
@@ -105,5 +111,51 @@ export async function GET(request: NextRequest) {
       message: 'Failed to fetch test results',
       error: errorMessage,
     }, { status: 500 });
+  }
+}
+
+// FUNGSI BARU UNTUK UPDATE REKOMENDASI
+export async function PUT(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    const body = await request.json();
+    const { recommendation, metadata } = body; // Kita akan mengirim ini dari client
+
+    if (!id) {
+      return NextResponse.json({ success: false, message: 'Missing test ID' }, { status: 400 });
+    }
+    if (!ObjectId.isValid(id)) {
+      return NextResponse.json({ success: false, message: 'Invalid test ID format' }, { status: 400 });
+    }
+    if (!recommendation) {
+      return NextResponse.json({ success: false, message: 'Missing recommendation content' }, { status: 400 });
+    }
+
+    const client = await clientPromise;
+    const db = client.db('colorvision_db');
+    const collection = db.collection('test_results');
+
+    // Update dokumen yang ada
+    const result = await collection.updateOne(
+      { _id: new ObjectId(id) },
+      { 
+        $set: { 
+          careerRecommendation: recommendation,
+          careerRecommendationMetadata: metadata || { generatedAt: new Date() }
+        } 
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json({ success: false, message: 'Test result not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, message: 'Recommendation updated' }, { status: 200 });
+
+  } catch (error) {
+    console.error('Error updating recommendation:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    return NextResponse.json({ success: false, message: 'Failed to update recommendation', error: errorMessage }, { status: 500 });
   }
 }
