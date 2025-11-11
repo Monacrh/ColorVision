@@ -193,7 +193,7 @@ export default function ResultsDetailPage() {
       <div className="max-w-4xl mx-auto">
         {/* Back Button */}
         <motion.button
-          onClick={() => router.back()}
+          onClick={() => router.push('/dashboard')}
           className="mb-6 flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
           whileHover={{ x: -4 }}
         >

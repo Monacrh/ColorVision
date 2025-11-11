@@ -81,6 +81,25 @@ const LLMResponseRenderer: React.FC<LLMResponseRendererProps> = ({
       .filter(p => p.length > 10);
   };
 
+  const parseCareerItems = (text: string) => {
+  if (!text) return [];
+  return text
+    .split('\n')
+    .filter(line => line.trim().startsWith('-'))
+    .map(line => {
+      const content = line.replace(/^[-•*]\s*/, '').trim();
+      const [titlePart, descPart] = content.split(':');
+      const [why, access] = descPart?.split(/Accessibility features?:/i) || [];
+      return {
+        title: titlePart?.trim() || '',
+        why: why?.trim() || '',
+        accessibility: access?.trim() || '',
+      };
+    })
+    .filter(c => c.title);
+};
+
+
   // Parse the content
   const section1 = parseSection(content, 1, 'Personalized Assessment');
   const section2 = parseSection(content, 2, 'Understanding Your Condition');
@@ -208,45 +227,47 @@ const LLMResponseRenderer: React.FC<LLMResponseRendererProps> = ({
       )}
 
       {/* Section 3: Career Paths - Highly Recommended - SAME DESIGN AS SECTION 4 */}
-      {section3 && (
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-6 border border-emerald-100 shadow-sm"
+{section3 && (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.3 }}
+    className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-6 border border-emerald-100 shadow-sm"
+  >
+    <div className="flex items-center mb-4">
+      <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center mr-4 shadow-md">
+        <span className="text-white font-bold text-xl">3</span>
+      </div>
+      <h3 className="text-2xl font-bold text-gray-900 flex items-center">
+        <CheckCircle className="mr-2 text-emerald-600" size={28} />
+        Perfect Career Matches
+      </h3>
+    </div>
+
+    <div className="grid md:grid-cols-2 gap-5">
+      {parseCareerItems(section3).map((career, idx) => (
+        <div
+          key={idx}
+          className="bg-white border border-emerald-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200"
         >
-          <div className="flex items-center mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center mr-4 shadow-md">
-              <span className="text-white font-bold text-xl">3</span>
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 flex items-center">
-              <CheckCircle className="mr-2 text-emerald-600" size={28} />
-              Perfect Career Matches
-            </h3>
-          </div>
-
-          <div className="prose prose-sm max-w-none mb-4">
-            {parseParagraphs(section3).map((para, idx) => (
-              <p key={idx} className="text-gray-700 leading-relaxed mb-3 text-base">
-                {para}
-              </p>
-            ))}
-          </div>
-
-          {parseListItems(section3).length > 0 && (
-            <div className="space-y-3">
-              {parseListItems(section3).map((item, idx) => (
-                <div key={idx} className="bg-white rounded-xl p-4 shadow-sm border border-emerald-200">
-                  <div className="flex items-start">
-                    <CheckCircle size={18} className="text-emerald-600 mr-3 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-gray-700 leading-relaxed">{item}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <h4 className="text-emerald-800 font-semibold mb-1">
+            💼 {career.title}
+          </h4>
+          <p className="text-gray-700 text-sm leading-relaxed mb-2">
+            {career.why}
+          </p>
+          {career.accessibility && (
+            <p className="text-sm text-emerald-700">
+              <span className="font-semibold">Accessibility:</span>{' '}
+              {career.accessibility}
+            </p>
           )}
-        </motion.div>
-      )}
+        </div>
+      ))}
+    </div>
+  </motion.div>
+)}
+
 
       {/* Section 4: Careers Requiring Accommodations */}
       {section4 && (
