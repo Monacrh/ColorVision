@@ -9,6 +9,7 @@ import {
   TrendingUp,
   BarChart3,
   Settings,
+  PieChartIcon,
 } from 'lucide-react';
 import SidebarView from './page';
 import { TestHistory } from '@/types/history';
@@ -24,7 +25,8 @@ const SidebarController = () => {
   // Static menu items
   const menuItems = [
     { icon: SquarePen, label: 'New Test' },
-    { icon: Library, label: 'History' },
+    // { icon: Library, label: 'History' },
+    { icon: PieChartIcon, label: 'Analytics' },
     { icon: Settings, label: 'Settings' },
   ];
 
@@ -99,8 +101,11 @@ const SidebarController = () => {
       case 'New Test':
         router.push('/dashboard');
         break;
-      case 'History':
-        router.push('/history');
+      // case 'History':
+      //   router.push('/history');
+      //   break;
+      case 'Analytics':
+        router.push('/analytics');
         break;
       case 'Settings':
         router.push('/settings');
