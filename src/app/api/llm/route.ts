@@ -41,56 +41,68 @@ Start with a warm, empathetic greeting. Acknowledge their results and explain wh
 ## **2. Understanding Your Condition**
 Explain ${deficiencyType} in simple, clear terms. Describe how it affects daily life and what specific challenges they might face. Focus on practical examples and be encouraging. Keep this section to 100-150 words.
 
-## **3. Career Paths - Highly Recommended (300-400 words)**
-   - List 10-15 careers that are EXCELLENT matches
-   - For each careers, provide:
-    + For each career, use this format on a single bullet line:
-    + - [Career Name]: Why it's suitable; Accessibility features.
+## **3. Career Paths - Highly Recommended**
+List 10-15 careers that are EXCELLENT matches. For each career, you MUST use EXACTLY this format on a single line:
+- [Career Name]: [Why it's suitable]. Accessibility features: [Specific accessibility features or tools].
 
+Example format:
+- Software Developer: Focuses on logic and problem-solving rather than color differentiation. Accessibility features: IDE themes with high contrast, colorblind-friendly syntax highlighting plugins.
+- Data Analyst: Works with patterns and numbers, minimal color dependency. Accessibility features: Excel colorblind mode, Tableau accessible palettes, pattern-based visualizations.
+- Technical Writer: Emphasizes clarity and structure over visual design. Accessibility features: Grammar checkers, style guides, accessible documentation templates.
+
+DO NOT use any other format. Each career must be on ONE line with the career name, description, and accessibility features clearly separated.
 
 ## **4. Careers Requiring Accommodations**
-List 5-8 careers that are possible with tools and accommodations. For each, explain the challenges and what accommodations can help. Use bullet points with - for each career. Keep this section to 150-200 words.
+List 5-8 careers that are possible with tools and accommodations. For each career, use EXACTLY this format:
+- [Career Name]: Challenges with [specific challenge]. Accommodations: [Specific tools or accommodations that help].
 
-- Graphic Designer: Challenges with color selection. Accommodations: Color picker tools, colleague verification, accessibility plugins.
-- UX/UI Designer: Challenges with color contrast. Accommodations: WCAG guidelines, contrast checkers, automated tools.
-- Lab Technician: Challenges with color-coded tests. Accommodations: Digital instruments, labeled samples.
+Example:
+- Graphic Designer: Challenges with color selection and palette creation. Accommodations: Color picker tools with hex codes, colleague verification, Adobe accessibility plugins, colorblind simulation tools.
+- UX/UI Designer: Challenges with ensuring color contrast meets standards. Accommodations: WCAG contrast checkers, automated accessibility testing tools, design systems with predefined accessible colors.
+
+Keep this section to 150-200 words total.
 
 ## **5. Careers to Avoid**
-List 5-7 careers not recommended due to safety concerns or strict color vision requirements. Be honest but gentle in your explanation. Use bullet points with - for each career. Keep this section to 100-150 words.
+List 5-7 careers not recommended due to safety concerns or strict color vision requirements. Be honest but gentle. Use bullet points with - for each career. Format:
+- [Career Name]: [Reason why not recommended, focusing on safety or strict requirements].
 
-- Commercial Pilot: Strict FAA color vision requirements for safety.
-- Electrician: Color-coded wiring systems pose safety risks.
-- Firefighter: Emergency situations require quick color identification.
+Example:
+- Commercial Pilot: Strict FAA color vision requirements for safety-critical operations and instrument reading.
+- Electrician: Color-coded wiring systems essential for safety; misidentification poses serious electrical hazards.
+
+Keep this section to 100-150 words.
 
 ## **6. Assistive Technology & Tools**
-List helpful tools, apps, and technologies. Include mobile apps, browser extensions, and workplace accommodations. Use bullet points with - for each tool. Keep this section to 150-200 words.
+List helpful tools, apps, and technologies. Include mobile apps, browser extensions, and workplace accommodations. Use bullet points with - for each tool. Format:
+- [Tool Name]: [Brief description of what it does and how it helps].
 
-- ColorBlind Pal: Mobile app that identifies colors using camera.
-- Colorblindly: Browser extension that adjusts website colors.
-- EnChroma Glasses: Special glasses that can enhance color perception for some users.
+Example:
+- ColorBlind Pal: Mobile app that identifies and announces colors using your phone's camera in real-time.
+- Colorblindly: Browser extension that simulates different types of color blindness and adjusts website colors for better visibility.
+
+Keep this section to 150-200 words.
 
 ## **7. Success Strategies**
 Provide actionable advice and strategies for success. Focus on strengths, communication, and confidence building. Use bullet points with - for each strategy. Keep this section to 100-150 words.
 
-- Leverage your strengths in pattern recognition and attention to detail.
-- Be proactive about discussing accommodations with employers.
-- Use technology tools to assist with color-related tasks.
+Example format:
+- Leverage your enhanced pattern recognition abilities and attention to detail in analytical tasks.
+- Communicate openly with employers about your needs and the simple accommodations that help you excel.
 
 ## **8. Closing Encouragement**
-End with an inspirational, uplifting message. Mention famous successful people with color vision deficiency. Remind them that this doesn't define their potential. Keep this section to about 100 words.
+End with an inspirational, uplifting message. Mention famous successful people with color vision deficiency (like Mark Zuckerberg, Bill Clinton). Remind them that this doesn't define their potential. Keep this section to about 100 words.
 
-Remember to:
-- Use the EXACT section headers above
-- Write in a warm, empathetic, professional tone
-- Be specific with career names and tools
-- Use bullet points with - for all lists
-- Keep paragraphs concise and readable
-- Balance realism with optimism
+CRITICAL FORMATTING RULES:
+1. Section 3 careers MUST include "Accessibility features:" in each line
+2. Each career in Section 3 must be ONE complete line
+3. Use the exact section headers shown above
+4. Use bullet points with - for all lists
+5. Keep the tone warm, professional, and encouraging
 
 Begin your response now:
 `;
 
-    // 🤖 Call Gemini model (without generationConfig)
+    // 🤖 Call Gemini model
     const response = await ai.models.generateContent({
       model: "gemini-2.0-flash",
       contents: prompt,
