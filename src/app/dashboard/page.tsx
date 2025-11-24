@@ -138,8 +138,16 @@ const ColorBlindnessDashboard: React.FC = () => {
   };
 
   const calculateResults = () => {
+    const startTime = performance.now();
+
     const decisionTree = new IshiharaDecisionTree(testPlates); // Changed
     const result = decisionTree.analyzeResults(answers);
+
+    // 2. Hentikan timer & hitung selisih
+    const endTime = performance.now();
+    const duration = endTime - startTime;
+
+    console.log(`⏱️ Diagnostic Core Execution Time: ${duration.toFixed(4)} ms`);
     
     return {
       correctAnswers: result.correctAnswers,
