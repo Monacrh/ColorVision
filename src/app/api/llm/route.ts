@@ -42,7 +42,7 @@ Start with a warm, empathetic greeting. Acknowledge their results and explain wh
 Explain ${deficiencyType} in simple, clear terms. Describe how it affects daily life and what specific challenges they might face. Focus on practical examples and be encouraging. Keep this section to 100-150 words.
 
 ## **3. Career Paths - Highly Recommended**
-List 10-15 careers that are EXCELLENT matches. For each career, you MUST use EXACTLY this format on a single line:
+List 7 careers that are EXCELLENT matches. For each career, you MUST use EXACTLY this format on a single line:
 - [Career Name]: [Why it's suitable]. Accessibility features: [Specific accessibility features or tools].
 
 Example format:
@@ -53,7 +53,7 @@ Example format:
 DO NOT use any other format. Each career must be on ONE line with the career name, description, and accessibility features clearly separated.
 
 ## **4. Careers Requiring Accommodations**
-List 5-8 careers that are possible with tools and accommodations. For each career, use EXACTLY this format:
+List 5-7 careers that are possible with tools and accommodations. For each career, use EXACTLY this format:
 - [Career Name]: Challenges with [specific challenge]. Accommodations: [Specific tools or accommodations that help].
 
 Example:
