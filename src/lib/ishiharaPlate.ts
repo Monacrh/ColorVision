@@ -116,14 +116,14 @@ export const ishiharaPlates: IshiharaPlate[] = [
     image: "/Ishihara2/14.jpg",
     normalAnswer: "2",
     deficientAnswer: null,
-    plateType: "number"
+    plateType: "trace"
   },
   {
     id: 17,
     image: "/Ishihara2/15.jpg",
     normalAnswer: "6",
     deficientAnswer: null,
-    plateType: "number"
+    plateType: "trace"
   },
   {
     id: 18,
