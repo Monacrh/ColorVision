@@ -15,13 +15,17 @@ interface LLMResponseRendererProps {
   deficiencyType: string;
   severity: string;
   onRegenerate?: () => void;
+  resultId?: string;
+  initialChatHistory?: any[];
 }
 
 const LLMResponseRenderer: React.FC<LLMResponseRendererProps> = ({ 
   content, 
   deficiencyType, 
   severity,
-  onRegenerate
+  onRegenerate,
+  resultId,       // Destructure props baru
+  initialChatHistory = []
 }) => {
   const [activeSection, setActiveSection] = useState<number>(1);
 
@@ -179,6 +183,8 @@ const LLMResponseRenderer: React.FC<LLMResponseRendererProps> = ({
                     deficiencyType={deficiencyType} 
                     severity={severity} 
                     diagnosis={content.substring(0, 100)} // Pass snippet diagnosis or pass diagnosis prop separately
+                    resultId={resultId || ''}
+                    initialHistory={initialChatHistory}
                  />
               ) : (
                 <>

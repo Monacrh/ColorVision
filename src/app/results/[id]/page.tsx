@@ -21,7 +21,12 @@ import {
 } from 'lucide-react';
 import LLMResponseRenderer from '../../components/llmresponse/llmresponse';
 
-// Interface tetap sama
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp?: string;
+}
+
 interface TestResultDetail {
   _id: string;
   testDate: Date;
@@ -44,6 +49,7 @@ interface TestResultDetail {
     details: string[];
   };
   careerRecommendation?: string;
+  chatHistory?: ChatMessage[];
 }
 
 export default function ResultsDetailPage() {
@@ -439,6 +445,8 @@ export default function ResultsDetailPage() {
                     deficiencyType={summary.deficiencyType}
                     severity={summary.severity}
                     onRegenerate={() => handleGenerateRecommendation(true)}
+                    resultId={result._id} 
+                    initialChatHistory={result.chatHistory || []}
                   />
                 ) : (
                   <div className="bg-gray-50 border border-gray-200 rounded-xl p-8 text-center">
