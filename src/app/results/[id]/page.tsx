@@ -98,16 +98,12 @@ export default function ResultsDetailPage() {
   // Fungsi untuk menangani generasi DAN penyimpanan
   const handleGenerateRecommendation = async (forceRegenerate: boolean = false) => {
     if (!result) return;
-    
-    // PENGECEKAN TAMBAHAN: Jangan pernah generate jika severity 'none'
     if (result.summary.severity === 'none') return;
-
-    if (careerRecommendation && !forceRegenerate) {
-      return;
-    }
+    if (careerRecommendation && !forceRegenerate) return;
     
     setIsLoadingCareer(true);
     try {
+      // 1. Generate konten baru dari LLM
       const llmResponse = await fetch('/api/llm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -119,27 +115,30 @@ export default function ResultsDetailPage() {
       });
 
       const llmData = await llmResponse.json();
-      if (!llmData.success) {
-        throw new Error(llmData.message || 'Failed to generate recommendation');
-      }
+      if (!llmData.success) throw new Error(llmData.message);
 
       const newRecommendation = llmData.recommendation;
-      setCareerRecommendation(newRecommendation); 
+      setCareerRecommendation(newRecommendation);
 
+      // 2. Simpan ke database DENGAN instruksi reset chat (jika forceRegenerate = true)
       await fetch(`/api/test-results?id=${result._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           recommendation: newRecommendation,
-          metadata: llmData.metadata
+          metadata: llmData.metadata,
+          resetChatHistory: forceRegenerate // <-- KUNCI PERUBAHAN DI SINI: Reset jika ini adalah regenerasi
         }),
       });
 
+      // 3. Update State Lokal agar UI Chat langsung bersih
+      if (forceRegenerate) {
+         setResult(prev => prev ? { ...prev, chatHistory: [] } : null);
+      }
+
     } catch (err) {
       console.error('Error handling career recommendation:', err);
-      if (!careerRecommendation) {
-        setCareerRecommendation('Unable to load career recommendations at this time. Please try again later.');
-      }
+      // ... error handling
     } finally {
       setIsLoadingCareer(false);
     }

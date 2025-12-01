@@ -180,11 +180,12 @@ const LLMResponseRenderer: React.FC<LLMResponseRendererProps> = ({
               {/* RENDER CHAT INTERFACE JIKA ID = 99 */}
               {currentSectionData.id === 99 ? (
                  <ChatInterface 
+                    key={content ? content.length : 'chat-key'}
                     deficiencyType={deficiencyType} 
                     severity={severity} 
                     diagnosis={content.substring(0, 100)} // Pass snippet diagnosis or pass diagnosis prop separately
                     resultId={resultId || ''}
-                    initialHistory={initialChatHistory}
+                    initialHistory={initialChatHistory || []}
                  />
               ) : (
                 <>

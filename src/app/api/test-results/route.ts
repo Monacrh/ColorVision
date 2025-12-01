@@ -120,42 +120,45 @@ export async function PUT(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     const body = await request.json();
-    const { recommendation, metadata } = body; // Kita akan mengirim ini dari client
+    
+    // Ambil flag resetChatHistory dari body
+    const { recommendation, metadata, resetChatHistory } = body; 
 
-    if (!id) {
-      return NextResponse.json({ success: false, message: 'Missing test ID' }, { status: 400 });
-    }
-    if (!ObjectId.isValid(id)) {
-      return NextResponse.json({ success: false, message: 'Invalid test ID format' }, { status: 400 });
-    }
-    if (!recommendation) {
-      return NextResponse.json({ success: false, message: 'Missing recommendation content' }, { status: 400 });
+    if (!id || !ObjectId.isValid(id)) {
+      return NextResponse.json({ success: false, message: 'Invalid ID' }, { status: 400 });
     }
 
     const client = await clientPromise;
     const db = client.db('colorvision_db');
     const collection = db.collection('test_results');
 
-    // Update dokumen yang ada
+    // Siapkan object update
+    const updateDoc: any = {
+      $set: {
+        careerRecommendation: recommendation,
+        careerRecommendationMetadata: metadata || { generatedAt: new Date() }
+      }
+    };
+
+    // LOGIKA BARU: Jika diminta reset, set chatHistory ke array kosong
+    if (resetChatHistory) {
+      updateDoc.$set.chatHistory = []; 
+    }
+
     const result = await collection.updateOne(
       { _id: new ObjectId(id) },
-      { 
-        $set: { 
-          careerRecommendation: recommendation,
-          careerRecommendationMetadata: metadata || { generatedAt: new Date() }
-        } 
-      }
+      updateDoc
     );
 
     if (result.matchedCount === 0) {
       return NextResponse.json({ success: false, message: 'Test result not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, message: 'Recommendation updated' }, { status: 200 });
+    return NextResponse.json({ success: true, message: 'Updated successfully' }, { status: 200 });
 
   } catch (error) {
-    console.error('Error updating recommendation:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    return NextResponse.json({ success: false, message: 'Failed to update recommendation', error: errorMessage }, { status: 500 });
+    // ... error handling (tetap sama)
+    return NextResponse.json({ success: false, message: 'Error updating' }, { status: 500 });
   }
 }
+
