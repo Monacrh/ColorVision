@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Play, Eye, Clock, CheckCircle, XCircle, RotateCcw, Home, FileText, AlertTriangle, Award
+  Play, Eye, Clock, CheckCircle, XCircle, AlertTriangle, Award, Sun, Moon, Monitor, FileText
 } from 'lucide-react';
 import Image from 'next/image';
 import { IshiharaDecisionTree } from '@/lib/ishiharaDecisionTree';
@@ -11,15 +11,165 @@ import { testPlates } from '@/lib/ishiharaPlate';
 import { TestAnswer } from '@/types/ishihara';
 import { useRouter } from 'next/navigation';
 
+// --- SUB-COMPONENT: CALIBRATION VIEW ---
+const CalibrationView = ({ onConfirm }: { onConfirm: (metadata: any) => void }) => {
+  const [checks, setChecks] = useState({
+    brightness: false,
+    nightMode: false,
+    cleanScreen: false
+  });
+  const [deviceWarning, setDeviceWarning] = useState<string | null>(null);
+  const [metadata, setLocalMetadata] = useState<any>(null);
+
+  useEffect(() => {
+    // 1. Device Type Detection (Deteksi Programatik)
+    // Mendeteksi spesifikasi layar secara otomatis
+    const meta = {
+      screenWidth: window.screen.width,
+      screenHeight: window.screen.height,
+      colorDepth: window.screen.colorDepth,
+      pixelRatio: window.devicePixelRatio,
+      userAgent: navigator.userAgent,
+      hardwareConcurrency: navigator.hardwareConcurrency
+    };
+    setLocalMetadata(meta);
+
+    // Flagging jika kedalaman warna kurang dari 24-bit
+    if (window.screen.colorDepth < 24) {
+      setDeviceWarning("Warning: Your screen color depth is low (< 24-bit). Results may be inaccurate.");
+    }
+  }, []);
+
+  const handleStart = () => {
+    onConfirm(metadata);
+  };
+
+  const allChecked = checks.brightness && checks.nightMode && checks.cleanScreen;
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-4 flex items-center justify-center">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-2xl bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8"
+      >
+        <div className="text-center mb-6">
+          <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+             <Monitor className="text-blue-600" size={24} />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900">Display Calibration</h2>
+          <p className="text-gray-500 text-sm">Ensure accurate results by setting up your environment.</p>
+        </div>
+
+        {/* Device Warning Banner */}
+        {deviceWarning && (
+          <div className="mb-6 bg-red-50 border border-red-200 p-4 rounded-xl flex items-start gap-3">
+            <AlertTriangle className="text-red-600 flex-shrink-0 mt-0.5" size={18} />
+            <p className="text-red-700 text-sm">{deviceWarning}</p>
+          </div>
+        )}
+
+        {/* 2. Pre-Test Calibration Check (Visual) */}
+        <div className="mb-8 bg-gray-50 rounded-xl p-5 border border-gray-200">
+          <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center">
+            <Eye size={16} className="mr-2 text-blue-500"/> 1. Visual Reference Check
+          </h3>
+          <p className="text-xs text-gray-600 mb-3">
+            Can you clearly distinguish the gradient steps and distinct colors below?
+          </p>
+          
+          <div className="space-y-3">
+            {/* Grayscale Gradient: Hitam ke Putih */}
+            <div className="relative">
+              <div className="h-12 w-full rounded-lg bg-gradient-to-r from-black via-gray-500 to-white border border-gray-300 shadow-sm"></div>
+              <div className="flex justify-between text-[10px] text-gray-400 mt-1 px-1 font-mono uppercase">
+                <span>Abs. Black</span>
+                <span>Gamma 2.2</span>
+                <span>Pure White</span>
+              </div>
+            </div>
+            
+            {/* Color Patches (RGB) */}
+            <div className="flex h-10 gap-2">
+              <div className="flex-1 bg-[#FF0000] rounded-lg shadow-sm flex items-center justify-center text-[10px] text-white/50 font-bold">R</div>
+              <div className="flex-1 bg-[#00FF00] rounded-lg shadow-sm flex items-center justify-center text-[10px] text-white/50 font-bold">G</div>
+              <div className="flex-1 bg-[#0000FF] rounded-lg shadow-sm flex items-center justify-center text-[10px] text-white/50 font-bold">B</div>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. Ambient Lighting & Settings Checklist */}
+        <div className="mb-8">
+          <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center">
+            <CheckCircle size={16} className="mr-2 text-blue-500"/> 2. Environment Checklist
+          </h3>
+          <div className="space-y-3">
+            <label className={`flex items-start gap-3 p-3 border rounded-xl cursor-pointer transition-all ${checks.brightness ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50 border-gray-200'}`}>
+              <div className="mt-0.5"><Sun size={18} className="text-orange-500"/></div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-gray-900">Screen Brightness</span>
+                  <input type="checkbox" checked={checks.brightness} onChange={e => setChecks({...checks, brightness: e.target.checked})} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
+                </div>
+                <p className="text-xs text-gray-500 mt-0.5">I have set brightness to <strong>80-100%</strong>.</p>
+              </div>
+            </label>
+
+            <label className={`flex items-start gap-3 p-3 border rounded-xl cursor-pointer transition-all ${checks.nightMode ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50 border-gray-200'}`}>
+              <div className="mt-0.5"><Moon size={18} className="text-indigo-500"/></div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-gray-900">Disable Color Filters</span>
+                  <input type="checkbox" checked={checks.nightMode} onChange={e => setChecks({...checks, nightMode: e.target.checked})} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
+                </div>
+                <p className="text-xs text-gray-500 mt-0.5">I have disabled <strong>Night Mode / Blue Light Filter</strong>.</p>
+              </div>
+            </label>
+
+            <label className={`flex items-start gap-3 p-3 border rounded-xl cursor-pointer transition-all ${checks.cleanScreen ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50 border-gray-200'}`}>
+              <div className="mt-0.5"><Sun size={18} className="text-yellow-500"/></div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-gray-900">Lighting Conditions</span>
+                  <input type="checkbox" checked={checks.cleanScreen} onChange={e => setChecks({...checks, cleanScreen: e.target.checked})} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
+                </div>
+                <p className="text-xs text-gray-500 mt-0.5">I am in a well-lit room without <strong>screen glare</strong>.</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <button
+          onClick={handleStart}
+          disabled={!allChecked}
+          className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all duration-200 ${
+            allChecked 
+              ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg transform active:scale-[0.98]' 
+              : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+          }`}
+        >
+          {allChecked ? 'Check Complete - Start Test' : 'Complete Checklist to Continue'}
+          {allChecked && <Play size={18} />}
+        </button>
+      </motion.div>
+    </div>
+  );
+};
+
+// --- MAIN DASHBOARD COMPONENT ---
 const ColorBlindnessDashboard: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'welcome' | 'test' | 'results'>('welcome');
+  const [currentView, setCurrentView] = useState<'welcome' | 'calibration' | 'test' | 'results'>('welcome');
   const [currentQuestion, setCurrentQuestion] = useState<number>(0);
   const [answers, setAnswers] = useState<TestAnswer[]>([]);
   const [currentInput, setCurrentInput] = useState<string>('');
   const [timeRemaining, setTimeRemaining] = useState<number>(30);
   const [testStarted, setTestStarted] = useState<boolean>(false);
   const [testCompleted, setTestCompleted] = useState<boolean>(false);
-  const [isSaving, setIsSaving] = useState<boolean>(false); // Tambahan state loading
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  
+  // State baru untuk menyimpan metadata perangkat
+  const [deviceMetadata, setDeviceMetadata] = useState<any>(null);
+
   const router = useRouter();
 
   const handleAnswer = useCallback((answer: string) => {
@@ -93,6 +243,7 @@ const ColorBlindnessDashboard: React.FC = () => {
                 confidence: results.confidence,
                 details: results.details,
               },
+              deviceMetadata: deviceMetadata, 
             }),
           });
 
@@ -105,13 +256,13 @@ const ColorBlindnessDashboard: React.FC = () => {
           }
         } catch (error) {
           console.error('Error saving test results:', error);
-          setIsSaving(false); // Tetap di halaman result jika error
+          setIsSaving(false);
         }
       };
 
       saveTestResults();
     }
-  }, [currentView, answers, router, calculateResults, isSaving]);
+  }, [currentView, answers, router, calculateResults, isSaving, deviceMetadata]);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | undefined;
@@ -132,6 +283,15 @@ const ColorBlindnessDashboard: React.FC = () => {
       if (interval) clearInterval(interval);
     };
   }, [testStarted, testCompleted, timeRemaining, currentInput, handleAnswer]);
+
+  const goToCalibration = () => {
+    setCurrentView('calibration');
+  };
+
+  const handleCalibrationComplete = (metadata: any) => {
+    setDeviceMetadata(metadata);
+    startTest();
+  };
 
   const startTest = () => {
     setCurrentView('test');
@@ -160,9 +320,6 @@ const ColorBlindnessDashboard: React.FC = () => {
     }
   };
 
-  // --- RESPONSIVE LAYOUT COMPONENTS ---
-
-  // 1. Welcome Screen
   if (currentView === 'welcome') {
     return (
       <div className="min-h-screen bg-gray-50 p-4 md:p-6 flex items-center justify-center">
@@ -224,13 +381,13 @@ const ColorBlindnessDashboard: React.FC = () => {
             </div>
 
             <motion.button
-              onClick={startTest}
+              onClick={goToCalibration}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 md:py-4 px-6 rounded-xl transition-colors duration-200 flex items-center justify-center space-x-3"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
               <Play size={20} />
-              <span>Begin Color Vision Test</span>
+              <span>Proceed to Setup</span>
             </motion.button>
           </motion.div>
         </div>
@@ -238,7 +395,10 @@ const ColorBlindnessDashboard: React.FC = () => {
     );
   }
 
-  // 2. Test Screen (Responsive Fixes Applied)
+  if (currentView === 'calibration') {
+    return <CalibrationView onConfirm={handleCalibrationComplete} />;
+  }
+
   if (currentView === 'test') {
     const currentTest = testPlates[currentQuestion];
     const progress = ((currentQuestion + 1) / testPlates.length) * 100;
@@ -251,7 +411,6 @@ const ColorBlindnessDashboard: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-8"
           >
-            {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
               <div>
                 <h2 className="text-lg md:text-xl font-semibold text-gray-900">
@@ -271,7 +430,6 @@ const ColorBlindnessDashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* Progress Bar */}
             <div className="w-full bg-gray-200 rounded-full h-2 mb-6 md:mb-8">
               <motion.div
                 className="bg-blue-600 h-2 rounded-full"
@@ -281,10 +439,7 @@ const ColorBlindnessDashboard: React.FC = () => {
               />
             </div>
 
-            {/* Main Content Grid: Stacks on mobile, Side-by-side on Large screens */}
             <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-              
-              {/* Left Side - Test Image */}
               <div className="flex justify-center w-full order-1">
                 <motion.div
                   key={currentQuestion}
@@ -293,7 +448,6 @@ const ColorBlindnessDashboard: React.FC = () => {
                   transition={{ duration: 0.3 }}
                   className="relative w-full max-w-[350px] md:max-w-[450px] aspect-square bg-white border-2 border-gray-200 rounded-2xl flex items-center justify-center shadow-sm p-2"
                 >
-                   {/* Using fill + object-contain for responsive image */}
                   <div className="relative w-full h-full">
                     <Image 
                       src={currentTest.image} 
@@ -307,7 +461,6 @@ const ColorBlindnessDashboard: React.FC = () => {
                 </motion.div>
               </div>
 
-              {/* Right Side - Input and Keypad */}
               <div className="flex flex-col justify-center w-full max-w-md mx-auto lg:max-w-none order-2">
                 <div className="mb-6 md:mb-8">
                   <div className="bg-gray-50 border-2 border-gray-200 rounded-xl px-4 py-4 md:py-6 text-center">
@@ -318,7 +471,6 @@ const ColorBlindnessDashboard: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Responsive Keypad */}
                 <div className="w-full">
                   <div className="grid grid-cols-3 gap-3 md:gap-4 mb-4">
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
@@ -375,10 +527,7 @@ const ColorBlindnessDashboard: React.FC = () => {
     );
   }
 
-  // 3. Results Screen (Responsive & Handling Save State)
   if (currentView === 'results') {
-    // Perhitungan ini hanya untuk display sementara saat loading/saving
-    // Karena setelah save berhasil, user akan di-redirect
     const results = calculateResults();
     
     return (
@@ -397,7 +546,6 @@ const ColorBlindnessDashboard: React.FC = () => {
               </div>
             ) : (
               <>
-                {/* Fallback view if redirection fails or is slow */}
                 <motion.div
                   initial={{ scale: 0.8 }}
                   animate={{ scale: 1 }}
