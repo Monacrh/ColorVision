@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     // Generate AI Response
     const result = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
       contents: promptHistory,
     });
 

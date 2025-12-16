@@ -104,7 +104,7 @@ Begin your response now:
 
     // 🤖 Call Gemini model
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
       contents: prompt,
     });
 
@@ -148,7 +148,7 @@ Begin your response now:
         success: true,
         recommendation: cleanedRecommendation,
         metadata: {
-          model: "gemini-2.0-flash",
+          model: "gemini-2.5-flash",
           generatedAt: new Date().toISOString(),
           sectionsPresent: hasAllSections,
           contentLength: cleanedRecommendation.length
